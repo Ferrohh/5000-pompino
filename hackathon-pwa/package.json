@@ -1,0 +1,25 @@
+{
+  "name": "hackathon-pwa",
+  "version": "1.0.0",
+  "description": "A progressive web application for hackathon demo.",
+  "main": "src/app.ts",
+  "scripts": {
+    "start": "lite-server",
+    "build": "tsc",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "axios": "^0.21.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.4.3",
+    "lite-server": "^2.6.1"
+  },
+  "keywords": [
+    "PWA",
+    "hackathon",
+    "demo"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
