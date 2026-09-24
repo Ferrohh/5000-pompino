@@ -9,10 +9,8 @@ import './map-screen.css'
 import './history.css'
 import './history-overrides.css'
 
-import type { PointIconType } from './icons'
-
-type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni' | 'storico'
-type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
+type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'perche' | 'segnalazioni' | 'storico'
+type IconName = 'home' | 'map' | 'water' | 'dam' | 'why' | 'alert'
 
 export type MantovaPoint = {
   id: string
@@ -95,6 +93,7 @@ const navItems: { id: Page; label: string; icon: IconName }[] = [
   { id: 'mappa', label: 'Mappa del fiume', icon: 'map' },
   { id: 'bilancio', label: 'Bilancio idrico', icon: 'water' },
   { id: 'dighe', label: 'Schema idraulico', icon: 'dam' },
+  { id: 'perche', label: 'Perché', icon: 'why' },
   { id: 'segnalazioni', label: 'Segnalazioni', icon: 'alert' },
 ]
 
@@ -104,6 +103,7 @@ function Icon({ name }: { name: IconName }) {
     map: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z" /><path d="M9 3v15M15 6v15" /></>,
     water: <><path d="M12 3.5S6 10 6 14.2a6 6 0 0 0 12 0C18 10 12 3.5 12 3.5Z" /><path d="M9 15.5c.6 1 1.5 1.5 3 1.5" /></>,
     dam: <><path d="M4 20h16M6 20V8h12v12M4 8h16M8 12h8M8 16h8" /></>,
+    why: <><circle cx="12" cy="12" r="9" /><path d="M9.7 9a2.5 2.5 0 1 1 4.2 1.8c-1.1.8-1.9 1.3-1.9 2.7M12 17h.01" /></>,
     alert: <><path d="M10.3 4.3 2.2 18a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></>,
   }
   return <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>
@@ -134,7 +134,7 @@ function App() {
         <div className="live-pill"><span className="live-dot"></span> DATI IN DIRETTA</div>
         <nav>
           <p className="nav-label">ESPLORA</p>
-          {navItems.map((item) => <button className={`nav-item ${page === item.id ? 'active' : ''}`} key={item.id} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.label}</span>{item.id === 'segnalazioni' && <span className="nav-badge">2</span>}</button>)}
+          {navItems.map((item) => <button className={`nav-item ${page === item.id ? 'active' : ''}`} key={item.id} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.label}</span></button>)}
         </nav>
       </aside>
 
@@ -144,6 +144,7 @@ function App() {
         {page === 'mappa' && <MapPage initialPoint={mapFocusPoint} onOpenHistory={(point) => { setHistoryPoint(point); setMapFocusPoint(null); navigate('storico') }} />}
         {page === 'bilancio' && <BalancePage />}
         {page === 'dighe' && <DamsPage />}
+        {page === 'perche' && <WhyPage navigate={navigate} />}
         {page === 'segnalazioni' && <ReportsPage noticeSent={noticeSent} setNoticeSent={setNoticeSent} />}
         {page === 'storico' && historyPoint && <HistoryPage point={historyPoint} onBack={() => { setMapFocusPoint(historyPoint); setHistoryPoint(null); navigate('mappa') }} />}
       </main>
@@ -173,7 +174,42 @@ function MetricCard({ label, value, unit, trend, positive, warning }: { label: s
   return <div className="metric-card"><p>{label}</p><div className="metric-value">{value}<small>{unit}</small></div><span className={`metric-trend ${positive ? 'positive' : ''} ${warning ? 'warning' : ''}`}>{positive && '↗ '}{trend}</span></div>
 }
 
+function WhyPageLegacy({ navigate }: { navigate: (page: Page) => void }) {
+  const questions = [
+    ['Perché in alcune valli arriva meno acqua?', 'La portata viene distribuita lungo tutto il bacino. Nei periodi secchi una parte deve restare nel fiume per il deflusso ecologico e per garantire acqua potabile, mentre i prelievi agricoli vengono regolati in base ai livelli misurati.'],
+    ['Chi decide come viene distribuita l’acqua?', 'Le decisioni si basano su portata, livelli, previsioni e fabbisogni rilevati. Il monitoraggio rende visibili questi dati e permette di distinguere una riduzione programmata da un guasto o da una criticità.'],
+    ['Perché non si può aprire sempre una diga?', 'Aprire una paratoia cambia il livello a valle e può aumentare il rischio di erosione, allagamento o carenza nel tratto successivo. Ogni regolazione deve mantenere l’equilibrio dell’intero corso, non solo di una singola valle.'],
+    ['Cosa significa “deflusso ecologico”?', 'È la quantità minima d’acqua che deve restare nel fiume per proteggere ecosistemi, habitat e qualità dell’acqua. Non è acqua sprecata: è una condizione necessaria per la salute del Mincio.'],
+    ['Quando è utile inviare una segnalazione?', 'Invia una segnalazione quando osservi un fatto localizzato e verificabile, come una perdita, un ostacolo, acqua torbida o un livello anomalo. Per i dati generali del bacino, consulta prima Bilancio idrico e Mappa del fiume.'],
+  ]
+
+  return <div className="page why-page"><PageIntro eyebrow="INFORMAZIONI PER IL TERRITORIO" title="Perché succede?" copy="Le risposte alle domande più frequenti sulla gestione dell’acqua, spiegate con i dati del bacino e senza allarmismi." action={<span className="live-status"><i></i> Dati verificati</span>} /><section className="why-intro"><div><p className="eyebrow">PRIMA DI SEGNALARE</p><h2>Capire il fiume aiuta a proteggerlo.</h2><p>Una riduzione locale non significa necessariamente un guasto. Qui trovi il contesto per leggere i dati, capire le scelte di gestione e sapere quando serve davvero intervenire.</p></div><div className="why-fact"><strong>3</strong><span>indicatori letti insieme</span><small>portata · livelli · fabbisogno</small></div></section><section className="faq-layout"><div className="faq-list"><div className="section-heading"><div><p className="eyebrow">DOMANDE FREQUENTI</p><h2>Le risposte più cercate</h2></div></div>{questions.map(([question, answer], index) => <details className="faq-item" key={question} open={index === 0}><summary><span>{question}</span><b>+</b></summary><p>{answer}</p></details>)}</div><aside className="why-aside"><p className="eyebrow">LEGGI I DATI</p><h2>Una decisione ha sempre un contesto.</h2><p>Portata, livelli e fabbisogno vengono letti insieme. Un singolo valore non basta per descrivere lo stato del fiume.</p><button className="text-button" onClick={() => navigate('bilancio')}>Apri il bilancio idrico <span>→</span></button><div className="why-route"><span>01</span><div><strong>Osserva</strong><small>i dati del bacino</small></div><span>02</span><div><strong>Confronta</strong><small>monte, centro e valle</small></div><span>03</span><div><strong>Segnala</strong><small>solo ciò che hai verificato</small></div></div></aside></section></div>
+}
+
+function WhyPage({ navigate }: { navigate: (page: Page) => void }) {
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState('Seleziona una domanda oppure scrivila: ti risponderò usando i dati del bacino.')
+  const answers: Record<string, string> = {
+    acqua: 'Quando una valle riceve meno acqua, la portata viene regolata considerando tutto il corso del Mincio: livelli a monte, fabbisogni locali, deflusso ecologico e sicurezza a valle. Una riduzione locale può quindi essere una scelta temporanea di equilibrio, non necessariamente un guasto.',
+    diga: 'Una diga viene regolata per mantenere il flusso entro livelli sicuri. Aprirla troppo velocemente può aumentare il rischio a valle; tenerla più chiusa può proteggere una riserva o garantire il deflusso ecologico.',
+    ambiente: 'Il deflusso ecologico è la quantità minima che deve restare nel fiume per mantenere habitat, qualità dell’acqua e continuità dell’ecosistema. È un vincolo operativo, non una perdita di risorsa.',
+    segnalazione: 'Una segnalazione è utile quando riguarda un fatto localizzato e verificabile: una perdita, un ostacolo, acqua torbida o un livello anomalo. Per capire il quadro generale, consulta prima Mappa del fiume e Bilancio idrico.',
+  }
+  const ask = (value: string) => {
+    setQuestion(value)
+    const normalized = value.toLowerCase()
+    const key = normalized.includes('diga') ? 'diga' : normalized.includes('ambiente') || normalized.includes('fiume') ? 'ambiente' : normalized.includes('segnal') ? 'segnalazione' : 'acqua'
+    setAnswer(answers[key])
+  }
+
+  return <div className="page why-page"><PageIntro eyebrow="INFORMAZIONI PER IL TERRITORIO" title="Perché succede?" copy="Un assistente per capire le scelte sul flusso dell’acqua e un registro pubblico delle motivazioni operative." action={<span className="live-status"><i></i> Dati verificati</span>} /><section className="why-tools"><div className="citizen-chat"><div className="chat-heading"><div><p className="eyebrow">ASSISTENTE DEL BACINO</p><h2>Hai una domanda sul fiume?</h2></div><span className="chat-status">online</span></div><div className="chat-answer"><span className="chat-avatar">M</span><p>{answer}</p></div><div className="chat-suggestions"><button onClick={() => ask('Perché in valle arriva meno acqua?')}>Perché arriva meno acqua?</button><button onClick={() => ask('Perché non aprite la diga?')}>Perché non aprite la diga?</button><button onClick={() => ask('Che cosa protegge l’ambiente?')}>Cosa protegge l’ambiente?</button><button onClick={() => ask('Quando invio una segnalazione?')}>Quando segnalare?</button></div><form className="chat-form" onSubmit={(event) => { event.preventDefault(); if (question.trim()) ask(question) }}><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Scrivi la tua domanda..." aria-label="Scrivi la tua domanda" /><button type="submit" aria-label="Invia domanda">→</button></form></div><aside className="decision-card"><p className="eyebrow">TRASPARENZA OPERATIVA</p><h2>Perché questa scelta?</h2><p>Ogni variazione del flusso viene accompagnata da una spiegazione semplice, così i dati non restano separati dalle decisioni.</p><div className="decision-item"><span>24 SET</span><div><strong>Portata ridotta verso valle</strong><p>Abbiamo mantenuto il deflusso ecologico e ridotto temporaneamente i prelievi agricoli per proteggere il livello minimo nel tratto centrale.</p></div></div><div className="decision-item"><span>22 SET</span><div><strong>Diga Centrale aperta al 18%</strong><p>La regolazione ha accompagnato l’aumento della portata senza trasferire un picco improvviso verso le valli.</p></div></div></aside></section><section className="decision-principles"><p className="eyebrow">COME LEGGERE UNA DECISIONE</p><div><span><b>01</b><strong>Dati</strong><small>livelli e portate rilevati</small></span><span><b>02</b><strong>Vincoli</strong><small>sicurezza e ambiente</small></span><span><b>03</b><strong>Scelta</strong><small>azione e area interessata</small></span><span><b>04</b><strong>Verifica</strong><small>effetto monitorato nel tempo</small></span></div></section></div>
+}
+
 function BalancePage() {
+  return <div className="page balance-page"><PageIntro eyebrow="QUADRO GENERALE DEL MINCIO" title="Il bilancio del fiume." copy="Dati aggregati lungo tutto il corso del Mincio per capire quanta acqua c'è, quanta ne serve e quando la situazione richiede attenzione." action={<span className="live-status"><i></i> Dati aggiornati ora</span>} /><section className="balance-status"><div className="balance-status-copy"><p className="eyebrow">STATO DEL BACINO</p><h2>Equilibrio sotto controllo</h2><p>La disponibilità attuale copre il fabbisogno stimato del territorio. Il margine resta positivo, ma il tratto a valle è quello da osservare con più attenzione.</p><div className="balance-alert"><span>✓</span><strong>Nessuna criticità attiva</strong><small>margine operativo nella norma</small></div></div><div className="balance-gauge"><div className="balance-gauge-ring"><strong>+18<span>%</span></strong><small>sopra il fabbisogno</small></div><div className="gauge-caption"><span>Acqua disponibile</span><strong>68%</strong></div></div></section><section className="balance-kpis"><div><span>Portata media del fiume</span><strong>42,6 <small>m³/s</small></strong><b className="kpi-positive">+4,2% nell'ultima ora</b></div><div><span>Fabbisogno stimato</span><strong>36,1 <small>m³/s</small></strong><b>consumo giornaliero medio</b></div><div><span>Margine disponibile</span><strong className="green-text">+6,5 <small>m³/s</small></strong><b className="kpi-positive">18% sopra il fabbisogno</b></div><div><span>Livello medio lungo il corso</span><strong>1,79 <small>m</small></strong><b>media di 12 punti monitorati</b></div></section><section className="balance-columns"><div className="balance-card balance-distribution"><div className="card-heading"><div><p className="eyebrow">COME VIENE UTILIZZATA</p><h2>Acqua fornita al territorio</h2></div><span className="small-label">100% della portata utile</span></div><div className="supply-track"><span className="supply-used"></span><span className="supply-reserve"></span></div><div className="supply-summary"><strong>68%</strong><span>fornita ai diversi usi</span><b>32% riserva e deflusso ecologico</b></div><div className="supply-legend"><span><i className="supply-dot civic-dot"></i>Uso civile <strong>31%</strong></span><span><i className="supply-dot agri-dot"></i>Agricoltura <strong>54%</strong></span><span><i className="supply-dot eco-dot"></i>Ecosistema <strong>15%</strong></span></div></div><div className="balance-card balance-risk"><p className="eyebrow">INDICE DI ATTENZIONE</p><div className="risk-heading"><h2>Situazione nella norma</h2><span className="risk-pill">BASSO</span></div><div className="risk-meter"><span></span></div><div className="risk-scale"><span>Normale</span><span>Attenzione</span><span>Critica</span></div><p>Il margine tra acqua disponibile e fabbisogno è sufficiente. La soglia di attenzione scatta sotto i <strong>+3,0 m³/s</strong> di margine.</p><div className="risk-note"><span>i</span><span>Il dato combina portata, livelli medi e prelievi rilevati nelle ultime 24 ore.</span></div></div></section><section className="balance-reach"><div className="section-heading"><div><p className="eyebrow">LUNGO TUTTO IL CORSO</p><h2>Come cambia il fiume da monte a valle</h2></div><span className="small-label">media rilevata oggi</span></div><div className="reach-grid"><div className="reach-item"><div className="reach-top"><span>01 · MONTE</span><b className="reach-ok">Regolare</b></div><strong>2,14 <small>m</small></strong><span>Portata 56,1 m³/s</span><div className="reach-line"><i style={{ width: '82%' }}></i></div></div><div className="reach-item"><div className="reach-top"><span>02 · CENTRO</span><b className="reach-ok">Stabile</b></div><strong>1,79 <small>m</small></strong><span>Portata 42,6 m³/s</span><div className="reach-line"><i style={{ width: '64%' }}></i></div></div><div className="reach-item"><div className="reach-top"><span>03 · VALLE</span><b className="reach-watch">Da osservare</b></div><strong>1,42 <small>m</small></strong><span>Portata 38,9 m³/s</span><div className="reach-line"><i className="watch-line" style={{ width: '48%' }}></i></div></div></div></section></div>
+}
+
+function BalancePageLegacy() {
   return <div className="page"><PageIntro eyebrow="RISORSA E DISTRIBUZIONE" title="Il bilancio dell'acqua." copy="Una fotografia chiara della disponibilità idrica nel bacino del Micio e delle scelte che la proteggono." action={<span className="period-select">Oggi, 24 settembre 2026⌄</span>} /><div className="balance-top"><div className="balance-visual"><div className="balance-ring"><div><strong>68<span>%</span></strong><small>disponibilità</small></div></div><div><p className="eyebrow">ACQUA DISPONIBILE</p><h3>Una situazione stabile</h3><p className="muted-copy">La riserva attuale è sufficiente per coprire i consumi previsti dei prossimi 14 giorni.</p></div></div><div className="balance-numbers"><div><span>Riserva totale</span><strong>18,4 <small>Mm³</small></strong></div><div><span>Consumo giornaliero</span><strong>1,24 <small>Mm³</small></strong></div><div><span>Afflusso ultime 24h</span><strong className="green-text">+1,86 <small>Mm³</small></strong></div></div></div><div className="content-columns"><section className="allocation-card"><div className="card-heading"><div><p className="eyebrow">DOVE VA L'ACQUA</p><h2>Distribuzione attuale</h2></div><span className="small-label">su 1,24 Mm³</span></div><div className="allocation-bar"><span className="agri"></span><span className="civic"></span><span className="ecosystem"></span></div><div className="allocation-legend"><AllocationItem color="agri" title="Agricoltura" value="54%" amount="0,67 Mm³" /><AllocationItem color="civic" title="Uso civile" value="31%" amount="0,38 Mm³" /><AllocationItem color="ecosystem" title="Ecosistema" value="15%" amount="0,19 Mm³" /></div></section><section className="why-card"><p className="eyebrow">IN CASO DI EMERGENZA</p><h2>Perché cambiano<br />le priorità?</h2><p>La distribuzione segue un ordine preciso: prima la sicurezza delle persone, poi la salute del fiume e infine le attività produttive.</p><div className="priority-list"><span><b>01</b><strong>Uso civile</strong><small>Acqua potabile e servizi essenziali</small></span><span><b>02</b><strong>Ecosistema</strong><small>Portata minima vitale del fiume</small></span><span><b>03</b><strong>Agricoltura</strong><small>Colture e riserve alimentari</small></span></div></section></div></div>
 }
 
