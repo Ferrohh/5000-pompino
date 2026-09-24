@@ -6,8 +6,10 @@ import 'leaflet/dist/leaflet.css'
 import './styles.css'
 import './hero-contrast.css'
 import './map-screen.css'
+import './history.css'
+import './history-overrides.css'
 
-type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni'
+type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni' | 'storico'
 type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
 
 export type MantovaPoint = {
@@ -108,6 +110,8 @@ function Icon({ name }: { name: IconName }) {
 function App() {
   const [page, setPage] = useState<Page>('home')
   const [noticeSent, setNoticeSent] = useState(false)
+  const [historyPoint, setHistoryPoint] = useState<MantovaPoint | null>(null)
+  const [mapFocusPoint, setMapFocusPoint] = useState<MantovaPoint | null>(null)
 
   useEffect(() => {
     document.querySelector<HTMLInputElement>('.report-file')?.setAttribute('capture', 'environment')
@@ -133,12 +137,13 @@ function App() {
       </aside>
 
       <main className="main-content">
-        <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div></header>
+        <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b>{page === 'storico' ? <><span>Mappa del fiume</span><b>/</b><strong>Storico punto</strong></> : <strong>{navItems.find((item) => item.id === page)?.label}</strong>}</div></header>
         {page === 'home' && <Home navigate={navigate} />}
-        {page === 'mappa' && <MapPage />}
+        {page === 'mappa' && <MapPage initialPoint={mapFocusPoint} onOpenHistory={(point) => { setHistoryPoint(point); setMapFocusPoint(null); navigate('storico') }} />}
         {page === 'bilancio' && <BalancePage />}
         {page === 'dighe' && <DamsPage />}
         {page === 'segnalazioni' && <ReportsPage noticeSent={noticeSent} setNoticeSent={setNoticeSent} />}
+        {page === 'storico' && historyPoint && <HistoryPage point={historyPoint} onBack={() => { setMapFocusPoint(historyPoint); setHistoryPoint(null); navigate('mappa') }} />}
       </main>
     </div>
   )
@@ -146,6 +151,16 @@ function App() {
 
 function PageIntro({ eyebrow, title, copy, action }: { eyebrow: string; title: string; copy: string; action?: ReactNode }) {
   return <div className="page-intro"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="intro-copy">{copy}</p></div>{action}</div>
+}
+
+function HistoryPage({ point, onBack }: { point: MantovaPoint; onBack: () => void }) {
+  return <div className="page history-page"><div className="history-heading"><div><p className="eyebrow">ARCHIVIO DEL MONITORAGGIO</p><h1>Storico del punto</h1></div></div><section className="history-overview"><div className="history-map-card" role="button" tabIndex={0} aria-label="Torna alla mappa del fiume" onClick={onBack} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onBack() }}><LeafletMantovaMap points={[point]} selectedPoint={point} onSelect={() => undefined} compact /></div><div className="history-point-info"><p className="eyebrow">PUNTO {point.id}</p><h2>{point.name}</h2><span className={`history-status ${point.status === 'Attenzione' ? 'warning' : ''}`}>{point.status}</span><p className="history-description">{point.description}</p><div className="history-data"><div><span>Livello attuale</span><strong>{point.livelloIdrometrico}</strong></div><div><span>Coordinate</span><strong>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</strong></div><div><span>Ultima lettura</span><strong>24 settembre · 14:32</strong></div><div><span>Serie disponibile</span><strong>Ultimi 30 giorni</strong></div></div></div></section><section className="history-charts"><div className="history-chart-card"><div className="chart-header"><div><p className="eyebrow">LIVELLO IDROMETRICO</p><h2>Andamento del livello</h2></div><strong>0,64 m</strong></div><HistoryChart color="#4c9a79" fill="#cfe7d5" values="18,42 92,36 166,51 240,45 314,59 388,42 462,48 536,31 610,38" labels={['01', '05', '10', '15', '20', '25', '30']} /></div><div className="history-chart-card"><div className="chart-header"><div><p className="eyebrow">PORTATA STIMATA</p><h2>Flusso nell’ultimo mese</h2></div><strong>42,6 m³/s</strong></div><HistoryChart color="#d2954c" fill="#f3dfbd" values="18,55 92,46 166,60 240,38 314,50 388,29 462,43 536,24 610,34" labels={['01', '05', '10', '15', '20', '25', '30']} /></div></section></div>
+}
+
+function HistoryChart({ color, fill, values, labels }: { color: string; fill: string; values: string; labels: string[] }) {
+  const points = values.split(' ').map((point) => point.split(',').map(Number))
+  const area = `${points[0][0]},116 ${values} ${points[points.length - 1][0]},116`
+  return <div className="history-chart"><svg viewBox="0 0 628 145" role="img" aria-label="Grafico storico demo"><path d="M18 25H610 M18 70H610 M18 116H610" stroke="#e3ebe3" strokeWidth="1" /><polygon points={area} fill={fill} opacity=".72" /><polyline points={values} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />{points.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#fffefa" stroke={color} strokeWidth="2" />)}</svg><div className="chart-labels">{labels.map((label) => <span key={label}>{label}</span>)}</div></div>
 }
 
 function Home({ navigate }: { navigate: (page: Page) => void }) {

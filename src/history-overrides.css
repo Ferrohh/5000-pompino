@@ -1,0 +1,13 @@
+.history-map-card {
+  cursor: pointer;
+}
+
+.history-map-card:hover {
+  border-color: #4c9a79;
+  box-shadow: 0 8px 20px rgba(30, 68, 47, .12);
+}
+
+.history-map-card:focus-visible {
+  outline: 3px solid rgba(76, 154, 121, .35);
+  outline-offset: 3px;
+}

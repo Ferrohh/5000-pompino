@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import { mantovaPoints, type MantovaPoint } from './main'
 
-export default function MapPage() {
-  const [selectedPoint, setSelectedPoint] = useState<MantovaPoint | null>(null)
+export default function MapPage({ initialPoint, onOpenHistory }: { initialPoint: MantovaPoint | null; onOpenHistory: (point: MantovaPoint) => void }) {
+  const [selectedPoint, setSelectedPoint] = useState<MantovaPoint | null>(initialPoint)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const matchingPoints = mantovaPoints.filter((point) => `${point.name} ${point.id}`.toLowerCase().includes(searchQuery.toLowerCase().trim()))
@@ -32,7 +32,7 @@ export default function MapPage() {
             <p>{selectedPoint.id}</p>
             <p className="selected-point-description">{selectedPoint.description}</p>
           </div>
-          <p>Lat {selectedPoint.lat.toFixed(4)} · Lng {selectedPoint.lng.toFixed(4)} · Livello idrometrico {selectedPoint.livelloIdrometrico}</p>
+          <button className="history-button" onClick={() => onOpenHistory(selectedPoint)}>Vai allo storico <span>→</span></button>
         </div> : <aside className="sensor-list mantova-list">
           <div className="list-header">
             <div>
