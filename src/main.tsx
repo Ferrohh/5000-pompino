@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+import MapPage from './MapPage'
 import './styles.css'
 
 type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni'
@@ -45,12 +46,10 @@ function Icon({ name }: { name: IconName }) {
 
 function App() {
   const [page, setPage] = useState<Page>('home')
-  const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null)
   const [noticeSent, setNoticeSent] = useState(false)
 
   const navigate = (next: Page) => {
     setPage(next)
-    setSelectedSensor(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -75,7 +74,7 @@ function App() {
       <main className="main-content">
         <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div><div className="topbar-actions"><span className="location"><span className="location-pin">⌖</span> Bacino del Micio</span><button className="icon-button" aria-label="Notifiche"><Icon name="alert" /><span className="notification-dot"></span></button><div className="avatar">MC</div></div></header>
         {page === 'home' && <Home navigate={navigate} />}
-        {page === 'mappa' && <MapPage selectedSensor={selectedSensor} setSelectedSensor={setSelectedSensor} />}
+        {page === 'mappa' && <MapPage />}
         {page === 'bilancio' && <BalancePage />}
         {page === 'dighe' && <DamsPage />}
         {page === 'segnalazioni' && <ReportsPage noticeSent={noticeSent} setNoticeSent={setNoticeSent} />}
@@ -96,7 +95,7 @@ function MetricCard({ label, value, unit, trend, positive, warning }: { label: s
   return <div className="metric-card"><p>{label}</p><div className="metric-value">{value}<small>{unit}</small></div><span className={`metric-trend ${positive ? 'positive' : ''} ${warning ? 'warning' : ''}`}>{positive && '↗ '}{trend}</span></div>
 }
 
-function MapPage({ selectedSensor, setSelectedSensor }: { selectedSensor: Sensor | null; setSelectedSensor: (sensor: Sensor | null) => void }) {
+function LegacyMapPage({ selectedSensor, setSelectedSensor }: { selectedSensor: Sensor | null; setSelectedSensor: (sensor: Sensor | null) => void }) {
   return <div className="page"><PageIntro eyebrow="RETE DI MONITORAGGIO" title="Il fiume, punto per punto." copy="Esplora i rilevatori lungo il corso del Micio e consulta l'ultima lettura disponibile." action={<button className="outline-button"><span className="refresh">↻</span> Aggiornato 2 min fa</button>} /><div className="map-layout"><div className="map-panel"><div className="map-toolbar"><div className="map-search">⌕ <span>Cerca una località</span></div><div className="map-legend"><span><i className="legend-dot good"></i> Normale</span><span><i className="legend-dot caution"></i> Attenzione</span></div></div><div className="river-map"><div className="map-grid"></div><div className="map-water"></div><div className="map-road road-one"></div><div className="map-road road-two"></div><span className="town town-one">Borgo alto</span><span className="town town-two">Piana</span><span className="town town-three">Ponte vecchio</span>{sensors.map((sensor) => <button key={sensor.name} className={`sensor-marker ${sensor.status === 'Attenzione' ? 'caution' : ''} ${selectedSensor?.name === sensor.name ? 'selected' : ''}`} style={{ left: sensor.x, top: sensor.y }} onClick={() => setSelectedSensor(sensor)} aria-label={`Apri dati ${sensor.name}`}><span className="pulse"></span><span className="marker-core">⌁</span></button>)}{selectedSensor && <div className="sensor-popup"><button className="close-popup" onClick={() => setSelectedSensor(null)}>×</button><p className="eyebrow">RILEVATORE {selectedSensor.name}</p><h3>{selectedSensor.place}</h3><div className="popup-values"><div><span>Livello acqua</span><strong>{selectedSensor.level}</strong></div><div><span>Portata</span><strong>{selectedSensor.flow}</strong></div></div><div className="popup-footer"><span className="status-badge"><i></i>{selectedSensor.status}</span><span>Rilevato {selectedSensor.time}</span></div></div>}</div></div><aside className="sensor-list"><div className="list-header"><div><p className="eyebrow">RILEVATORI</p><h3>4 punti attivi</h3></div><span className="filter-button">Tutti⌄</span></div>{sensors.map((sensor) => <button className={`sensor-row ${selectedSensor?.name === sensor.name ? 'selected' : ''}`} key={sensor.name} onClick={() => setSelectedSensor(sensor)}><span className={`list-marker ${sensor.status === 'Attenzione' ? 'caution' : ''}`}>⌁</span><span className="sensor-info"><strong>{sensor.name} <small>{sensor.place}</small></strong><span>Ultima lettura: {sensor.time}</span></span><span className="sensor-level"><strong>{sensor.level}</strong><small>{sensor.status}</small></span></button>)}</aside></div></div>
 }
 
