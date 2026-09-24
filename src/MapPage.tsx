@@ -30,6 +30,7 @@ export default function MapPage() {
             <p className="eyebrow">PUNTO SELEZIONATO</p>
             <h3>{selectedPoint.name}</h3>
             <p>{selectedPoint.id}</p>
+            <p className="selected-point-description">{selectedPoint.description}</p>
           </div>
           <p>Lat {selectedPoint.lat.toFixed(4)} · Lng {selectedPoint.lng.toFixed(4)} · Livello idrometrico {selectedPoint.livelloIdrometrico}</p>
         </div> : <aside className="sensor-list mantova-list">
@@ -79,6 +80,7 @@ function LeafletMantovaMap({ points, selectedPoint, onSelect, compact }: { point
     <div class="mantova-popup">
       <p class="eyebrow">${point.id}</p>
       <h3>${point.name}</h3>
+      <p>${point.description}</p>
       <strong>Lat ${point.lat.toFixed(4)} · Lng ${point.lng.toFixed(4)}</strong>
       <p>Livello idrometrico: ${point.livelloIdrometrico}</p>
       <span class="popup-tag ${point.status === 'Attenzione' ? 'warning' : ''}">${point.status}</span>

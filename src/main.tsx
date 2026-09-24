@@ -14,6 +14,7 @@ export type MantovaPoint = {
   id: string
   name: string
   icon: 'pin' | 'circle' | 'square' | 'diamond'
+  description: string
   lat: number
   lng: number
   status: 'Ottimale' | 'Attenzione'
@@ -25,6 +26,7 @@ const mantovaPoints: MantovaPoint[] = [
     id: '01',
     name: 'Peschiera del Garda',
     icon: 'pin',
+    description: 'Punto di ingresso del Mincio dal Lago di Garda.',
     lat: 45.440277,
     lng: 10.698333,
     status: 'Ottimale',
@@ -34,6 +36,7 @@ const mantovaPoints: MantovaPoint[] = [
     id: '02',
     name: 'Salionze Mandracchio Virgilio',
     icon: 'circle',
+    description: 'Nodo di regolazione tra il corso principale e il canale Virgilio.',
     lat: 45.393888,
     lng: 10.709444,
     status: 'Attenzione',
@@ -43,6 +46,7 @@ const mantovaPoints: MantovaPoint[] = [
     id: '03',
     name: 'Salionze canale Seriola',
     icon: 'diamond',
+    description: 'Derivazione laterale collegata alla rete della Seriola.',
     lat: 45.392777,
     lng: 10.710833,
     status: 'Ottimale',
@@ -52,6 +56,7 @@ const mantovaPoints: MantovaPoint[] = [
     id: '04',
     name: 'Salionze Mincio',
     icon: 'square',
+    description: 'Rilevatore sul corso principale subito a valle di Salionze.',
     lat: 45.392777,
     lng: 10.706111,
     status: 'Ottimale',
@@ -61,6 +66,7 @@ const mantovaPoints: MantovaPoint[] = [
     id: '05',
     name: 'Casale di Goito',
     icon: 'pin',
+    description: 'Stazione di controllo del livello nella valle del Mincio.',
     lat: 45.223888,
     lng: 10.677500,
     status: 'Ottimale',
@@ -70,6 +76,7 @@ const mantovaPoints: MantovaPoint[] = [
     id: '06',
     name: 'Pozzolo',
     icon: 'circle',
+    description: 'Punto di monitoraggio vicino alla derivazione di Pozzolo.',
     lat: 45.301666,
     lng: 10.713333,
     status: 'Ottimale',
