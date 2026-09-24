@@ -136,7 +136,7 @@
   .map-screen-page .map-search-toggle { width: 36px; height: 36px; }.map-screen-page .map-search-panel { top: 0; right: 44px; width: min(260px, calc(100vw - 32px)); }.map-screen-page .mantova-list {
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: 80px;
     padding: 7px;
   }
 
@@ -152,9 +152,17 @@
   .map-screen-page .selected-point-card {
     left: 20px;
     right: 20px;
-    bottom: 12px;
+    bottom: 80px;
     width: auto;
-    height: 96px;
-    display: block;
+    height: auto;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .map-screen-page .selected-point-card .history-button {
+    align-self: flex-end;
   }
 }
