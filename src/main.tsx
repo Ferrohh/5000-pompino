@@ -1,27 +1,96 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+import * as L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import './styles.css'
 
 type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni'
 type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
 
-type Sensor = {
+type MantovaPoint = {
+  id: string
   name: string
-  place: string
-  level: string
-  flow: string
-  time: string
+  lat: number
+  lng: number
   status: 'Ottimale' | 'Attenzione'
-  x: string
-  y: string
+  livelloIdrometrico: string
 }
 
-const sensors: Sensor[] = [
-  { name: 'MC-01', place: 'Ponte vecchio', level: '1,84 m', flow: '42,6 m³/s', time: '2 min fa', status: 'Ottimale', x: '29%', y: '67%' },
-  { name: 'MC-02', place: 'Borgo alto', level: '2,12 m', flow: '56,1 m³/s', time: '5 min fa', status: 'Attenzione', x: '47%', y: '46%' },
-  { name: 'MC-03', place: 'Diga Nord', level: '1,67 m', flow: '38,9 m³/s', time: '3 min fa', status: 'Ottimale', x: '69%', y: '27%' },
-  { name: 'MC-04', place: 'Piana agricola', level: '1,52 m', flow: '34,2 m³/s', time: '8 min fa', status: 'Ottimale', x: '77%', y: '70%' },
+type WaterwayFeature = {
+  id: string
+  name: string
+  kind: string
+  coords: Array<[number, number]>
+  color: string
+  weight: number
+  dashArray?: string
+}
+
+type OverpassWay = {
+  id: number
+  tags?: Record<string, string>
+  geometry?: Array<{ lat: number; lon: number }>
+}
+
+const MANTOVA_BBOX = {
+  south: 45.10,
+  west: 10.74,
+  north: 45.18,
+  east: 10.86,
+}
+
+const OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
+
+const mantovaPoints: MantovaPoint[] = [
+  {
+    id: '01',
+    name: 'Peschiera del Garda',
+    lat: 45.440277,
+    lng: 10.698333,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.64 m',
+  },
+  {
+    id: '02',
+    name: 'Salionze Mandracchio Virgilio',
+    lat: 45.393888,
+    lng: 10.709444,
+    status: 'Attenzione',
+    livelloIdrometrico: '0.64 m',
+  },
+  {
+    id: '03',
+    name: 'Salionze canale Seriola',
+    lat: 45.392777,
+    lng: 10.710833,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.84 m',
+  },
+  {
+    id: '04',
+    name: 'Salionze Mincio',
+    lat: 45.392777,
+    lng: 10.706111,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.36 m',
+  },
+  {
+    id: '05',
+    name: 'Casale di Goito',
+    lat: 45.223888,
+    lng: 10.677500,
+    status: 'Ottimale',
+    livelloIdrometrico: '20.30 m',
+  },
+  {
+    id: '06',
+    name: 'Pozzolo',
+    lat: 45.301666,
+    lng: 10.713333,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.05 m',
+  },
 ]
 
 const navItems: { id: Page; label: string; icon: IconName }[] = [
@@ -45,12 +114,12 @@ function Icon({ name }: { name: IconName }) {
 
 function App() {
   const [page, setPage] = useState<Page>('home')
-  const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null)
+  const [selectedPoint, setSelectedPoint] = useState<MantovaPoint | null>(null)
   const [noticeSent, setNoticeSent] = useState(false)
 
   const navigate = (next: Page) => {
     setPage(next)
-    setSelectedSensor(null)
+    setSelectedPoint(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -75,7 +144,7 @@ function App() {
       <main className="main-content">
         <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div><div className="topbar-actions"><span className="location"><span className="location-pin">⌖</span> Bacino del Micio</span><button className="icon-button" aria-label="Notifiche"><Icon name="alert" /><span className="notification-dot"></span></button><div className="avatar">MC</div></div></header>
         {page === 'home' && <Home navigate={navigate} />}
-        {page === 'mappa' && <MapPage selectedSensor={selectedSensor} setSelectedSensor={setSelectedSensor} />}
+        {page === 'mappa' && <MapPage selectedPoint={selectedPoint} setSelectedPoint={setSelectedPoint} />}
         {page === 'bilancio' && <BalancePage />}
         {page === 'dighe' && <DamsPage />}
         {page === 'segnalazioni' && <ReportsPage noticeSent={noticeSent} setNoticeSent={setNoticeSent} />}
@@ -89,15 +158,160 @@ function PageIntro({ eyebrow, title, copy, action }: { eyebrow: string; title: s
 }
 
 function Home({ navigate }: { navigate: (page: Page) => void }) {
-  return <div className="page home-page"><section className="hero"><div className="hero-copy"><p className="eyebrow light">MONITORAGGIO DEL BACINO</p><h1>Ogni goccia<br /><em>racconta</em> il fiume.</h1><p>Una lettura condivisa e trasparente dello stato del fiume Micio, per capire oggi le risorse di domani.</p><button className="primary-button" onClick={() => navigate('mappa')}>Esplora il fiume <span>→</span></button></div><div className="hero-graphic"><div className="sun"></div><div className="mountain m1"></div><div className="mountain m2"></div><div className="hero-river"></div><div className="hero-stats"><span>PORTATA ATTUALE</span><strong>42,6 <small>m³/s</small></strong><b><i></i> +4,2% nell'ultima ora</b></div></div></section><section className="section-block"><div className="section-heading"><div><p className="eyebrow">SITUAZIONE ATTUALE</p><h2>Il fiume, in un colpo d'occhio</h2></div><button className="text-button" onClick={() => navigate('bilancio')}>Vedi bilancio completo <span>↗</span></button></div><div className="metric-grid"><MetricCard label="Livello medio" value="1,79" unit="m" trend="+0,08 m" positive /><MetricCard label="Disponibilità idrica" value="68" unit="%" trend="nella norma" positive /><MetricCard label="Dighe aperte" value="3" unit="/ 5" trend="monitorate" /><MetricCard label="Segnalazioni attive" value="2" unit="" trend="da verificare" warning /></div></section><section className="split-preview"><div className="preview-note"><p className="eyebrow">UNA RETE CONDIVISA</p><h2>La trasparenza<br />parte dai dati.</h2><p>Scopri come i livelli rilevati guidano le decisioni sulla distribuzione dell'acqua durante le emergenze.</p><button className="text-button" onClick={() => navigate('bilancio')}>Come funziona <span>→</span></button></div><div className="mini-map"><div className="mini-river"></div><span className="mini-marker one"></span><span className="mini-marker two"></span><span className="mini-marker three"></span><div className="map-caption"><strong>4 rilevatori attivi</strong><span>Aggiornati in tempo reale</span></div></div></section></div>
+  return <div className="page home-page"><section className="hero"><div className="hero-copy"><p className="eyebrow light">MONITORAGGIO DEL BACINO</p><h1>Ogni goccia<br /><em>racconta</em> il fiume.</h1><p>Una lettura condivisa e trasparente dello stato del fiume Micio, per capire oggi le risorse di domani.</p><button className="primary-button" onClick={() => navigate('mappa')}>Esplora il fiume <span>→</span></button></div><div className="hero-graphic"><div className="sun"></div><div className="mountain m1"></div><div className="mountain m2"></div><div className="hero-river"></div><div className="hero-stats"><span>PORTATA ATTUALE</span><strong>42,6 <small>m³/s</small></strong><b><i></i> +4,2% nell'ultima ora</b></div></div></section><section className="section-block"><div className="section-heading"><div><p className="eyebrow">SITUAZIONE ATTUALE</p><h2>Il fiume, in un colpo d'occhio</h2></div><button className="text-button" onClick={() => navigate('bilancio')}>Vedi bilancio completo <span>↗</span></button></div><div className="metric-grid"><MetricCard label="Livello medio" value="1,79" unit="m" trend="+0,08 m" positive /><MetricCard label="Disponibilità idrica" value="68" unit="%" trend="nella norma" positive /><MetricCard label="Dighe aperte" value="3" unit="/ 5" trend="monitorate" /><MetricCard label="Segnalazioni attive" value="2" unit="" trend="da verificare" warning /></div></section><section className="split-preview"><div className="preview-note"><p className="eyebrow">UNA RETE CONDIVISA</p><h2>La trasparenza<br />parte dai dati.</h2><p>Scopri come i livelli rilevati guidano le decisioni sulla distribuzione dell'acqua durante le emergenze.</p><button className="text-button" onClick={() => navigate('mappa')}>Apri la mappa <span>→</span></button></div><div className="mini-map-real"><LeafletMantovaMap points={mantovaPoints} selectedPoint={null} onSelect={() => undefined} compact /></div></section></div>
 }
 
 function MetricCard({ label, value, unit, trend, positive, warning }: { label: string; value: string; unit: string; trend: string; positive?: boolean; warning?: boolean }) {
   return <div className="metric-card"><p>{label}</p><div className="metric-value">{value}<small>{unit}</small></div><span className={`metric-trend ${positive ? 'positive' : ''} ${warning ? 'warning' : ''}`}>{positive && '↗ '}{trend}</span></div>
 }
 
-function MapPage({ selectedSensor, setSelectedSensor }: { selectedSensor: Sensor | null; setSelectedSensor: (sensor: Sensor | null) => void }) {
-  return <div className="page"><PageIntro eyebrow="RETE DI MONITORAGGIO" title="Il fiume, punto per punto." copy="Esplora i rilevatori lungo il corso del Micio e consulta l'ultima lettura disponibile." action={<button className="outline-button"><span className="refresh">↻</span> Aggiornato 2 min fa</button>} /><div className="map-layout"><div className="map-panel"><div className="map-toolbar"><div className="map-search">⌕ <span>Cerca una località</span></div><div className="map-legend"><span><i className="legend-dot good"></i> Normale</span><span><i className="legend-dot caution"></i> Attenzione</span></div></div><div className="river-map"><div className="map-grid"></div><div className="map-water"></div><div className="map-road road-one"></div><div className="map-road road-two"></div><span className="town town-one">Borgo alto</span><span className="town town-two">Piana</span><span className="town town-three">Ponte vecchio</span>{sensors.map((sensor) => <button key={sensor.name} className={`sensor-marker ${sensor.status === 'Attenzione' ? 'caution' : ''} ${selectedSensor?.name === sensor.name ? 'selected' : ''}`} style={{ left: sensor.x, top: sensor.y }} onClick={() => setSelectedSensor(sensor)} aria-label={`Apri dati ${sensor.name}`}><span className="pulse"></span><span className="marker-core">⌁</span></button>)}{selectedSensor && <div className="sensor-popup"><button className="close-popup" onClick={() => setSelectedSensor(null)}>×</button><p className="eyebrow">RILEVATORE {selectedSensor.name}</p><h3>{selectedSensor.place}</h3><div className="popup-values"><div><span>Livello acqua</span><strong>{selectedSensor.level}</strong></div><div><span>Portata</span><strong>{selectedSensor.flow}</strong></div></div><div className="popup-footer"><span className="status-badge"><i></i>{selectedSensor.status}</span><span>Rilevato {selectedSensor.time}</span></div></div>}</div></div><aside className="sensor-list"><div className="list-header"><div><p className="eyebrow">RILEVATORI</p><h3>4 punti attivi</h3></div><span className="filter-button">Tutti⌄</span></div>{sensors.map((sensor) => <button className={`sensor-row ${selectedSensor?.name === sensor.name ? 'selected' : ''}`} key={sensor.name} onClick={() => setSelectedSensor(sensor)}><span className={`list-marker ${sensor.status === 'Attenzione' ? 'caution' : ''}`}>⌁</span><span className="sensor-info"><strong>{sensor.name} <small>{sensor.place}</small></strong><span>Ultima lettura: {sensor.time}</span></span><span className="sensor-level"><strong>{sensor.level}</strong><small>{sensor.status}</small></span></button>)}</aside></div></div>
+function MapPage({ selectedPoint, setSelectedPoint }: { selectedPoint: MantovaPoint | null; setSelectedPoint: (point: MantovaPoint | null) => void }) {
+  return (
+    <div className="page">
+      <PageIntro
+        eyebrow="MANTOVA IN MAPPA"
+        title="La città, punto per punto."
+        copy="Una mappa reale di Mantova con punti demo cliccabili: ogni marker apre un popup e i dati si modificano facilmente a mano dall'array dei punti."
+        action={<button className="outline-button"><span className="refresh">↻</span> Aggiornata ora</button>}
+      />
+
+      <div className="map-layout mantova-map-layout">
+        <div className="map-panel mantova-map-panel">
+          <div className="map-toolbar">
+            <div className="map-search">⌕ <span>Mantova, Lombardia</span></div>
+            <div className="map-legend">
+              <span><i className="legend-dot good"></i> Ottimale</span>
+              <span><i className="legend-dot caution"></i> Attenzione</span>
+              <span><i className="legend-line"></i> Fiumi OSM</span>
+            </div>
+          </div>
+
+          <div className="mantova-map-frame">
+            <LeafletMantovaMap points={mantovaPoints} selectedPoint={selectedPoint} onSelect={setSelectedPoint} />
+          </div>
+
+          {selectedPoint && (
+            <div className="selected-point-card">
+              <div>
+                <p className="eyebrow">PUNTO SELEZIONATO</p>
+                <h3>{selectedPoint.name}</h3>
+                <p>{selectedPoint.id}</p>
+              </div>
+              <p>Lat {selectedPoint.lat.toFixed(4)} · Lng {selectedPoint.lng.toFixed(4)} · Livello idrometrico {selectedPoint.livelloIdrometrico}</p>
+            </div>
+          )}
+        </div>
+
+        <aside className="sensor-list mantova-list">
+          <div className="list-header">
+            <div>
+              <p className="eyebrow">PUNTI DEMO</p>
+              <h3>{mantovaPoints.length} punti attivi</h3>
+            </div>
+            <span className="filter-button">Mantova⌄</span>
+          </div>
+
+          {mantovaPoints.map((point) => (
+            <button
+              className={`sensor-row ${selectedPoint?.id === point.id ? 'selected' : ''}`}
+              key={point.id}
+              onClick={() => setSelectedPoint(point)}
+            >
+              <span className={`list-marker ${point.status === 'Attenzione' ? 'caution' : ''}`}>⌁</span>
+              <span className="sensor-info">
+                <strong>{point.name} <small>{point.id}</small></strong>
+                <span>Livello idrometrico: {point.livelloIdrometrico}</span>
+              </span>
+              <span className="sensor-level">
+                <strong>{point.status}</strong>
+                <small>{point.livelloIdrometrico}</small>
+              </span>
+            </button>
+          ))}
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+function LeafletMantovaMap({ points, selectedPoint, onSelect, compact }: { points: MantovaPoint[]; selectedPoint: MantovaPoint | null; onSelect: (point: MantovaPoint | null) => void; compact?: boolean }) {
+  const mapElementRef = useRef<HTMLDivElement | null>(null)
+  const mapRef = useRef<L.Map | null>(null)
+  const markerRefs = useRef<Record<string, L.Marker>>({})
+  const waterwaysLayerRef = useRef<L.LayerGroup | null>(null)
+
+  const createPointIcon = (point: MantovaPoint, selected: boolean) => L.divIcon({
+    className: 'mantova-marker-icon',
+    html: `<span class="mantova-pin ${point.status === 'Attenzione' ? 'warning' : ''} ${selected ? 'selected' : ''}"></span>`,
+    iconSize: [22, 30],
+    iconAnchor: [11, 30],
+    popupAnchor: [0, -24],
+  })
+
+  const popupHtml = (point: MantovaPoint) => `
+    <div class="mantova-popup">
+      <p class="eyebrow">${point.id}</p>
+      <h3>${point.name}</h3>
+      <strong>Lat ${point.lat.toFixed(4)} · Lng ${point.lng.toFixed(4)}</strong>
+      <p>Livello idrometrico: ${point.livelloIdrometrico}</p>
+      <span class="popup-tag ${point.status === 'Attenzione' ? 'warning' : ''}">${point.status}</span>
+    </div>
+  `
+
+  useEffect(() => {
+    if (!mapElementRef.current || mapRef.current) return
+
+    const map = L.map(mapElementRef.current, {
+      zoomControl: true,
+      scrollWheelZoom: true,
+      preferCanvas: true,
+      dragging: !compact,
+      doubleClickZoom: !compact,
+      boxZoom: !compact,
+      keyboard: !compact,
+    }).setView([45.156, 10.792], 14)
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map)
+
+    points.forEach((point) => {
+      const marker = L.marker([point.lat, point.lng], {
+        icon: createPointIcon(point, selectedPoint?.id === point.id),
+      })
+
+      marker.bindPopup(popupHtml(point))
+      marker.on('click', () => onSelect(point))
+      marker.addTo(map)
+      markerRefs.current[point.id] = marker
+    })
+
+    mapRef.current = map
+
+    return () => {
+      map.remove()
+      mapRef.current = null
+      markerRefs.current = {}
+    }
+  }, [onSelect, points, compact])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    points.forEach((point) => {
+      const marker = markerRefs.current[point.id]
+      if (!marker) return
+      marker.setIcon(createPointIcon(point, selectedPoint?.id === point.id))
+    })
+
+    if (!selectedPoint) return
+    map.flyTo([selectedPoint.lat, selectedPoint.lng], 15.5, { duration: 0.8 })
+    markerRefs.current[selectedPoint.id]?.openPopup()
+  }, [points, selectedPoint])
+
+  return <div ref={mapElementRef} className={`mantova-map ${compact ? 'compact' : ''}`} />
 }
 
 function BalancePage() {
