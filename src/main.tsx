@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import * as L from 'leaflet'
+import MapPage, { LeafletMantovaMap } from './MapPage'
 import 'leaflet/dist/leaflet.css'
 import './styles.css'
 
 type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni'
 type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
 
-type MantovaPoint = {
+export type MantovaPoint = {
   id: string
   name: string
   lat: number
@@ -16,31 +16,6 @@ type MantovaPoint = {
   status: 'Ottimale' | 'Attenzione'
   livelloIdrometrico: string
 }
-
-type WaterwayFeature = {
-  id: string
-  name: string
-  kind: string
-  coords: Array<[number, number]>
-  color: string
-  weight: number
-  dashArray?: string
-}
-
-type OverpassWay = {
-  id: number
-  tags?: Record<string, string>
-  geometry?: Array<{ lat: number; lon: number }>
-}
-
-const MANTOVA_BBOX = {
-  south: 45.10,
-  west: 10.74,
-  north: 45.18,
-  east: 10.86,
-}
-
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
 
 const mantovaPoints: MantovaPoint[] = [
   {
@@ -93,6 +68,8 @@ const mantovaPoints: MantovaPoint[] = [
   },
 ]
 
+export { mantovaPoints }
+
 const navItems: { id: Page; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Panoramica', icon: 'home' },
   { id: 'mappa', label: 'Mappa del fiume', icon: 'map' },
@@ -114,12 +91,10 @@ function Icon({ name }: { name: IconName }) {
 
 function App() {
   const [page, setPage] = useState<Page>('home')
-  const [selectedPoint, setSelectedPoint] = useState<MantovaPoint | null>(null)
   const [noticeSent, setNoticeSent] = useState(false)
 
   const navigate = (next: Page) => {
     setPage(next)
-    setSelectedPoint(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -144,7 +119,7 @@ function App() {
       <main className="main-content">
         <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div><div className="topbar-actions"><span className="location"><span className="location-pin">⌖</span> Bacino del Micio</span><button className="icon-button" aria-label="Notifiche"><Icon name="alert" /><span className="notification-dot"></span></button><div className="avatar">MC</div></div></header>
         {page === 'home' && <Home navigate={navigate} />}
-        {page === 'mappa' && <MapPage selectedPoint={selectedPoint} setSelectedPoint={setSelectedPoint} />}
+        {page === 'mappa' && <MapPage />}
         {page === 'bilancio' && <BalancePage />}
         {page === 'dighe' && <DamsPage />}
         {page === 'segnalazioni' && <ReportsPage noticeSent={noticeSent} setNoticeSent={setNoticeSent} />}
@@ -163,155 +138,6 @@ function Home({ navigate }: { navigate: (page: Page) => void }) {
 
 function MetricCard({ label, value, unit, trend, positive, warning }: { label: string; value: string; unit: string; trend: string; positive?: boolean; warning?: boolean }) {
   return <div className="metric-card"><p>{label}</p><div className="metric-value">{value}<small>{unit}</small></div><span className={`metric-trend ${positive ? 'positive' : ''} ${warning ? 'warning' : ''}`}>{positive && '↗ '}{trend}</span></div>
-}
-
-function MapPage({ selectedPoint, setSelectedPoint }: { selectedPoint: MantovaPoint | null; setSelectedPoint: (point: MantovaPoint | null) => void }) {
-  return (
-    <div className="page">
-      <PageIntro
-        eyebrow="MANTOVA IN MAPPA"
-        title="La città, punto per punto."
-        copy="Una mappa reale di Mantova con punti demo cliccabili: ogni marker apre un popup e i dati si modificano facilmente a mano dall'array dei punti."
-        action={<button className="outline-button"><span className="refresh">↻</span> Aggiornata ora</button>}
-      />
-
-      <div className="map-layout mantova-map-layout">
-        <div className="map-panel mantova-map-panel">
-          <div className="map-toolbar">
-            <div className="map-search">⌕ <span>Mantova, Lombardia</span></div>
-            <div className="map-legend">
-              <span><i className="legend-dot good"></i> Ottimale</span>
-              <span><i className="legend-dot caution"></i> Attenzione</span>
-              <span><i className="legend-line"></i> Fiumi OSM</span>
-            </div>
-          </div>
-
-          <div className="mantova-map-frame">
-            <LeafletMantovaMap points={mantovaPoints} selectedPoint={selectedPoint} onSelect={setSelectedPoint} />
-          </div>
-
-          {selectedPoint && (
-            <div className="selected-point-card">
-              <div>
-                <p className="eyebrow">PUNTO SELEZIONATO</p>
-                <h3>{selectedPoint.name}</h3>
-                <p>{selectedPoint.id}</p>
-              </div>
-              <p>Lat {selectedPoint.lat.toFixed(4)} · Lng {selectedPoint.lng.toFixed(4)} · Livello idrometrico {selectedPoint.livelloIdrometrico}</p>
-            </div>
-          )}
-        </div>
-
-        <aside className="sensor-list mantova-list">
-          <div className="list-header">
-            <div>
-              <p className="eyebrow">PUNTI DEMO</p>
-              <h3>{mantovaPoints.length} punti attivi</h3>
-            </div>
-            <span className="filter-button">Mantova⌄</span>
-          </div>
-
-          {mantovaPoints.map((point) => (
-            <button
-              className={`sensor-row ${selectedPoint?.id === point.id ? 'selected' : ''}`}
-              key={point.id}
-              onClick={() => setSelectedPoint(point)}
-            >
-              <span className={`list-marker ${point.status === 'Attenzione' ? 'caution' : ''}`}>⌁</span>
-              <span className="sensor-info">
-                <strong>{point.name} <small>{point.id}</small></strong>
-                <span>Livello idrometrico: {point.livelloIdrometrico}</span>
-              </span>
-              <span className="sensor-level">
-                <strong>{point.status}</strong>
-                <small>{point.livelloIdrometrico}</small>
-              </span>
-            </button>
-          ))}
-        </aside>
-      </div>
-    </div>
-  )
-}
-
-function LeafletMantovaMap({ points, selectedPoint, onSelect, compact }: { points: MantovaPoint[]; selectedPoint: MantovaPoint | null; onSelect: (point: MantovaPoint | null) => void; compact?: boolean }) {
-  const mapElementRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<L.Map | null>(null)
-  const markerRefs = useRef<Record<string, L.Marker>>({})
-  const waterwaysLayerRef = useRef<L.LayerGroup | null>(null)
-
-  const createPointIcon = (point: MantovaPoint, selected: boolean) => L.divIcon({
-    className: 'mantova-marker-icon',
-    html: `<span class="mantova-pin ${point.status === 'Attenzione' ? 'warning' : ''} ${selected ? 'selected' : ''}"></span>`,
-    iconSize: [22, 30],
-    iconAnchor: [11, 30],
-    popupAnchor: [0, -24],
-  })
-
-  const popupHtml = (point: MantovaPoint) => `
-    <div class="mantova-popup">
-      <p class="eyebrow">${point.id}</p>
-      <h3>${point.name}</h3>
-      <strong>Lat ${point.lat.toFixed(4)} · Lng ${point.lng.toFixed(4)}</strong>
-      <p>Livello idrometrico: ${point.livelloIdrometrico}</p>
-      <span class="popup-tag ${point.status === 'Attenzione' ? 'warning' : ''}">${point.status}</span>
-    </div>
-  `
-
-  useEffect(() => {
-    if (!mapElementRef.current || mapRef.current) return
-
-    const map = L.map(mapElementRef.current, {
-      zoomControl: true,
-      scrollWheelZoom: true,
-      preferCanvas: true,
-      dragging: !compact,
-      doubleClickZoom: !compact,
-      boxZoom: !compact,
-      keyboard: !compact,
-    }).setView([45.156, 10.792], 14)
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map)
-
-    points.forEach((point) => {
-      const marker = L.marker([point.lat, point.lng], {
-        icon: createPointIcon(point, selectedPoint?.id === point.id),
-      })
-
-      marker.bindPopup(popupHtml(point))
-      marker.on('click', () => onSelect(point))
-      marker.addTo(map)
-      markerRefs.current[point.id] = marker
-    })
-
-    mapRef.current = map
-
-    return () => {
-      map.remove()
-      mapRef.current = null
-      markerRefs.current = {}
-    }
-  }, [onSelect, points, compact])
-
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
-
-    points.forEach((point) => {
-      const marker = markerRefs.current[point.id]
-      if (!marker) return
-      marker.setIcon(createPointIcon(point, selectedPoint?.id === point.id))
-    })
-
-    if (!selectedPoint) return
-    map.flyTo([selectedPoint.lat, selectedPoint.lng], 15.5, { duration: 0.8 })
-    markerRefs.current[selectedPoint.id]?.openPopup()
-  }, [points, selectedPoint])
-
-  return <div ref={mapElementRef} className={`mantova-map ${compact ? 'compact' : ''}`} />
 }
 
 function BalancePage() {
