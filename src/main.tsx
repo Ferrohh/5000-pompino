@@ -1,29 +1,74 @@
 import { useState } from 'react'
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import MapPage from './MapPage'
+import MapPage, { LeafletMantovaMap } from './MapPage'
+import 'leaflet/dist/leaflet.css'
 import './styles.css'
 
 type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni'
 type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
 
-type Sensor = {
+export type MantovaPoint = {
+  id: string
   name: string
-  place: string
-  level: string
-  flow: string
-  time: string
+  lat: number
+  lng: number
   status: 'Ottimale' | 'Attenzione'
-  x: string
-  y: string
+  livelloIdrometrico: string
 }
 
-const sensors: Sensor[] = [
-  { name: 'MC-01', place: 'Ponte vecchio', level: '1,84 m', flow: '42,6 m³/s', time: '2 min fa', status: 'Ottimale', x: '29%', y: '67%' },
-  { name: 'MC-02', place: 'Borgo alto', level: '2,12 m', flow: '56,1 m³/s', time: '5 min fa', status: 'Attenzione', x: '47%', y: '46%' },
-  { name: 'MC-03', place: 'Diga Nord', level: '1,67 m', flow: '38,9 m³/s', time: '3 min fa', status: 'Ottimale', x: '69%', y: '27%' },
-  { name: 'MC-04', place: 'Piana agricola', level: '1,52 m', flow: '34,2 m³/s', time: '8 min fa', status: 'Ottimale', x: '77%', y: '70%' },
+const mantovaPoints: MantovaPoint[] = [
+  {
+    id: '01',
+    name: 'Peschiera del Garda',
+    lat: 45.440277,
+    lng: 10.698333,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.64 m',
+  },
+  {
+    id: '02',
+    name: 'Salionze Mandracchio Virgilio',
+    lat: 45.393888,
+    lng: 10.709444,
+    status: 'Attenzione',
+    livelloIdrometrico: '0.64 m',
+  },
+  {
+    id: '03',
+    name: 'Salionze canale Seriola',
+    lat: 45.392777,
+    lng: 10.710833,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.84 m',
+  },
+  {
+    id: '04',
+    name: 'Salionze Mincio',
+    lat: 45.392777,
+    lng: 10.706111,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.36 m',
+  },
+  {
+    id: '05',
+    name: 'Casale di Goito',
+    lat: 45.223888,
+    lng: 10.677500,
+    status: 'Ottimale',
+    livelloIdrometrico: '20.30 m',
+  },
+  {
+    id: '06',
+    name: 'Pozzolo',
+    lat: 45.301666,
+    lng: 10.713333,
+    status: 'Ottimale',
+    livelloIdrometrico: '0.05 m',
+  },
 ]
+
+export { mantovaPoints }
 
 const navItems: { id: Page; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Panoramica', icon: 'home' },
@@ -58,17 +103,21 @@ function App() {
       <aside className="sidebar">
         <div className="brand" onClick={() => navigate('home')} role="button" tabIndex={0}>
           <div className="brand-mark"><span></span><span></span><span></span></div>
-          <div><strong>mincio</strong><small>MONITOR</small></div>
+          <div><strong>micio</strong><small>MONITOR</small></div>
         </div>
         <div className="live-pill"><span className="live-dot"></span> DATI IN DIRETTA</div>
         <nav>
           <p className="nav-label">ESPLORA</p>
           {navItems.map((item) => <button className={`nav-item ${page === item.id ? 'active' : ''}`} key={item.id} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.label}</span>{item.id === 'segnalazioni' && <span className="nav-badge">2</span>}</button>)}
         </nav>
+        <div className="sidebar-bottom">
+          <div className="help-box"><span className="help-icon">?</span><div><strong>Hai trovato un problema?</strong><p>Segnalalo al team Micio</p></div></div>
+          <div className="last-update"><span className="live-dot"></span><span>Ultimo aggiornamento<br /><strong>24 settembre 2026, 14:32</strong></span></div>
+        </div>
       </aside>
 
       <main className="main-content">
-        <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div></header>
+        <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div><div className="topbar-actions"><span className="location"><span className="location-pin">⌖</span> Bacino del Micio</span><button className="icon-button" aria-label="Notifiche"><Icon name="alert" /><span className="notification-dot"></span></button><div className="avatar">MC</div></div></header>
         {page === 'home' && <Home navigate={navigate} />}
         {page === 'mappa' && <MapPage />}
         {page === 'bilancio' && <BalancePage />}
@@ -84,91 +133,22 @@ function PageIntro({ eyebrow, title, copy, action }: { eyebrow: string; title: s
 }
 
 function Home({ navigate }: { navigate: (page: Page) => void }) {
-  return <div className="page home-page"><section className="hero"><div className="hero-copy"><p className="eyebrow light">MONITORAGGIO DEL BACINO</p><h1>Ogni goccia<br /><em>racconta</em> il fiume.</h1><p>Una lettura condivisa e trasparente dello stato del fiume Mincio, per capire oggi le risorse di domani.</p><button className="primary-button" onClick={() => navigate('mappa')}>Esplora il fiume <span>→</span></button></div><div className="hero-graphic"><div className="sun"></div><div className="mountain m1"></div><div className="mountain m2"></div><div className="hero-river"></div><div className="hero-stats"><span>PORTATA ATTUALE</span><strong>42,6 <small>m³/s</small></strong><b><i></i> +4,2% nell'ultima ora</b></div></div></section><section className="section-block"><div className="section-heading"><div><p className="eyebrow">SITUAZIONE ATTUALE</p><h2>Il fiume, in un colpo d'occhio</h2></div><button className="text-button" onClick={() => navigate('bilancio')}>Vedi bilancio completo <span>↗</span></button></div><div className="metric-grid"><MetricCard label="Livello medio" value="1,79" unit="m" trend="+0,08 m" positive /><MetricCard label="Disponibilità idrica" value="68" unit="%" trend="nella norma" positive /><MetricCard label="Dighe aperte" value="3" unit="/ 5" trend="monitorate" /><MetricCard label="Segnalazioni attive" value="2" unit="" trend="da verificare" warning /></div></section><section className="split-preview"><div className="preview-note"><p className="eyebrow">UNA RETE CONDIVISA</p><h2>La trasparenza<br />parte dai dati.</h2><p>Scopri come i livelli rilevati guidano le decisioni sulla distribuzione dell'acqua durante le emergenze.</p><button className="text-button" onClick={() => navigate('bilancio')}>Come funziona <span>→</span></button></div><div className="mini-map"><div className="mini-river"></div><span className="mini-marker one"></span><span className="mini-marker two"></span><span className="mini-marker three"></span><div className="map-caption"><strong>4 rilevatori attivi</strong><span>Aggiornati in tempo reale</span></div></div></section></div>
+  return <div className="page home-page"><section className="hero"><div className="hero-copy"><p className="eyebrow light">MONITORAGGIO DEL BACINO</p><h1>Ogni goccia<br /><em>racconta</em> il fiume.</h1><p>Una lettura condivisa e trasparente dello stato del fiume Micio, per capire oggi le risorse di domani.</p><button className="primary-button" onClick={() => navigate('mappa')}>Esplora il fiume <span>→</span></button></div><div className="hero-graphic"><div className="sun"></div><div className="mountain m1"></div><div className="mountain m2"></div><div className="hero-river"></div><div className="hero-stats"><span>PORTATA ATTUALE</span><strong>42,6 <small>m³/s</small></strong><b><i></i> +4,2% nell'ultima ora</b></div></div></section><section className="section-block"><div className="section-heading"><div><p className="eyebrow">SITUAZIONE ATTUALE</p><h2>Il fiume, in un colpo d'occhio</h2></div><button className="text-button" onClick={() => navigate('bilancio')}>Vedi bilancio completo <span>↗</span></button></div><div className="metric-grid"><MetricCard label="Livello medio" value="1,79" unit="m" trend="+0,08 m" positive /><MetricCard label="Disponibilità idrica" value="68" unit="%" trend="nella norma" positive /><MetricCard label="Dighe aperte" value="3" unit="/ 5" trend="monitorate" /><MetricCard label="Segnalazioni attive" value="2" unit="" trend="da verificare" warning /></div></section><section className="split-preview"><div className="preview-note"><p className="eyebrow">UNA RETE CONDIVISA</p><h2>La trasparenza<br />parte dai dati.</h2><p>Scopri come i livelli rilevati guidano le decisioni sulla distribuzione dell'acqua durante le emergenze.</p><button className="text-button" onClick={() => navigate('mappa')}>Apri la mappa <span>→</span></button></div><div className="mini-map-real"><LeafletMantovaMap points={mantovaPoints} selectedPoint={null} onSelect={() => undefined} compact /></div></section></div>
 }
 
 function MetricCard({ label, value, unit, trend, positive, warning }: { label: string; value: string; unit: string; trend: string; positive?: boolean; warning?: boolean }) {
   return <div className="metric-card"><p>{label}</p><div className="metric-value">{value}<small>{unit}</small></div><span className={`metric-trend ${positive ? 'positive' : ''} ${warning ? 'warning' : ''}`}>{positive && '↗ '}{trend}</span></div>
 }
 
-function LegacyMapPage({ selectedSensor, setSelectedSensor }: { selectedSensor: Sensor | null; setSelectedSensor: (sensor: Sensor | null) => void }) {
-  return <div className="page"><PageIntro eyebrow="RETE DI MONITORAGGIO" title="Il fiume, punto per punto." copy="Esplora i rilevatori lungo il corso del Mincio e consulta l'ultima lettura disponibile." action={<button className="outline-button"><span className="refresh">↻</span> Aggiornato 2 min fa</button>} /><div className="map-layout"><div className="map-panel"><div className="map-toolbar"><div className="map-search">⌕ <span>Cerca una località</span></div><div className="map-legend"><span><i className="legend-dot good"></i> Normale</span><span><i className="legend-dot caution"></i> Attenzione</span></div></div><div className="river-map"><div className="map-grid"></div><div className="map-water"></div><div className="map-road road-one"></div><div className="map-road road-two"></div><span className="town town-one">Borgo alto</span><span className="town town-two">Piana</span><span className="town town-three">Ponte vecchio</span>{sensors.map((sensor) => <button key={sensor.name} className={`sensor-marker ${sensor.status === 'Attenzione' ? 'caution' : ''} ${selectedSensor?.name === sensor.name ? 'selected' : ''}`} style={{ left: sensor.x, top: sensor.y }} onClick={() => setSelectedSensor(sensor)} aria-label={`Apri dati ${sensor.name}`}><span className="pulse"></span><span className="marker-core">⌁</span></button>)}{selectedSensor && <div className="sensor-popup"><button className="close-popup" onClick={() => setSelectedSensor(null)}>×</button><p className="eyebrow">RILEVATORE {selectedSensor.name}</p><h3>{selectedSensor.place}</h3><div className="popup-values"><div><span>Livello acqua</span><strong>{selectedSensor.level}</strong></div><div><span>Portata</span><strong>{selectedSensor.flow}</strong></div></div><div className="popup-footer"><span className="status-badge"><i></i>{selectedSensor.status}</span><span>Rilevato {selectedSensor.time}</span></div></div>}</div></div><aside className="sensor-list"><div className="list-header"><div><p className="eyebrow">RILEVATORI</p><h3>4 punti attivi</h3></div><span className="filter-button">Tutti⌄</span></div>{sensors.map((sensor) => <button className={`sensor-row ${selectedSensor?.name === sensor.name ? 'selected' : ''}`} key={sensor.name} onClick={() => setSelectedSensor(sensor)}><span className={`list-marker ${sensor.status === 'Attenzione' ? 'caution' : ''}`}>⌁</span><span className="sensor-info"><strong>{sensor.name} <small>{sensor.place}</small></strong><span>Ultima lettura: {sensor.time}</span></span><span className="sensor-level"><strong>{sensor.level}</strong><small>{sensor.status}</small></span></button>)}</aside></div></div>
-}
-
 function BalancePage() {
-  return <div className="page"><PageIntro eyebrow="RISORSA E DISTRIBUZIONE" title="Il bilancio dell'acqua." copy="Una fotografia chiara della disponibilità idrica nel bacino del Mincio e delle scelte che la proteggono." action={<span className="period-select">Oggi, 24 settembre 2026⌄</span>} /><div className="balance-top"><div className="balance-visual"><div className="balance-ring"><div><strong>68<span>%</span></strong><small>disponibilità</small></div></div><div><p className="eyebrow">ACQUA DISPONIBILE</p><h3>Una situazione stabile</h3><p className="muted-copy">La riserva attuale è sufficiente per coprire i consumi previsti dei prossimi 14 giorni.</p></div></div><div className="balance-numbers"><div><span>Riserva totale</span><strong>18,4 <small>Mm³</small></strong></div><div><span>Consumo giornaliero</span><strong>1,24 <small>Mm³</small></strong></div><div><span>Afflusso ultime 24h</span><strong className="green-text">+1,86 <small>Mm³</small></strong></div></div></div><div className="content-columns"><section className="allocation-card"><div className="card-heading"><div><p className="eyebrow">DOVE VA L'ACQUA</p><h2>Distribuzione attuale</h2></div><span className="small-label">su 1,24 Mm³</span></div><div className="allocation-bar"><span className="agri"></span><span className="civic"></span><span className="ecosystem"></span></div><div className="allocation-legend"><AllocationItem color="agri" title="Agricoltura" value="54%" amount="0,67 Mm³" /><AllocationItem color="civic" title="Uso civile" value="31%" amount="0,38 Mm³" /><AllocationItem color="ecosystem" title="Ecosistema" value="15%" amount="0,19 Mm³" /></div></section><section className="why-card"><p className="eyebrow">IN CASO DI EMERGENZA</p><h2>Perché cambiano<br />le priorità?</h2><p>La distribuzione segue un ordine preciso: prima la sicurezza delle persone, poi la salute del fiume e infine le attività produttive.</p><div className="priority-list"><span><b>01</b><strong>Uso civile</strong><small>Acqua potabile e servizi essenziali</small></span><span><b>02</b><strong>Ecosistema</strong><small>Portata minima vitale del fiume</small></span><span><b>03</b><strong>Agricoltura</strong><small>Colture e riserve alimentari</small></span></div></section></div></div>
+  return <div className="page"><PageIntro eyebrow="RISORSA E DISTRIBUZIONE" title="Il bilancio dell'acqua." copy="Una fotografia chiara della disponibilità idrica nel bacino del Micio e delle scelte che la proteggono." action={<span className="period-select">Oggi, 24 settembre 2026⌄</span>} /><div className="balance-top"><div className="balance-visual"><div className="balance-ring"><div><strong>68<span>%</span></strong><small>disponibilità</small></div></div><div><p className="eyebrow">ACQUA DISPONIBILE</p><h3>Una situazione stabile</h3><p className="muted-copy">La riserva attuale è sufficiente per coprire i consumi previsti dei prossimi 14 giorni.</p></div></div><div className="balance-numbers"><div><span>Riserva totale</span><strong>18,4 <small>Mm³</small></strong></div><div><span>Consumo giornaliero</span><strong>1,24 <small>Mm³</small></strong></div><div><span>Afflusso ultime 24h</span><strong className="green-text">+1,86 <small>Mm³</small></strong></div></div></div><div className="content-columns"><section className="allocation-card"><div className="card-heading"><div><p className="eyebrow">DOVE VA L'ACQUA</p><h2>Distribuzione attuale</h2></div><span className="small-label">su 1,24 Mm³</span></div><div className="allocation-bar"><span className="agri"></span><span className="civic"></span><span className="ecosystem"></span></div><div className="allocation-legend"><AllocationItem color="agri" title="Agricoltura" value="54%" amount="0,67 Mm³" /><AllocationItem color="civic" title="Uso civile" value="31%" amount="0,38 Mm³" /><AllocationItem color="ecosystem" title="Ecosistema" value="15%" amount="0,19 Mm³" /></div></section><section className="why-card"><p className="eyebrow">IN CASO DI EMERGENZA</p><h2>Perché cambiano<br />le priorità?</h2><p>La distribuzione segue un ordine preciso: prima la sicurezza delle persone, poi la salute del fiume e infine le attività produttive.</p><div className="priority-list"><span><b>01</b><strong>Uso civile</strong><small>Acqua potabile e servizi essenziali</small></span><span><b>02</b><strong>Ecosistema</strong><small>Portata minima vitale del fiume</small></span><span><b>03</b><strong>Agricoltura</strong><small>Colture e riserve alimentari</small></span></div></section></div></div>
 }
 
 function AllocationItem({ color, title, value, amount }: { color: string; title: string; value: string; amount: string }) { return <div className="allocation-item"><span><i className={color}></i>{title}</span><strong>{value}</strong><small>{amount}</small></div> }
 
 function DamsPage() {
-  return <div className="page"><PageIntro eyebrow="CONTROLLO DELLE OPERE" title="La rete idraulica." copy="Lo schema del Mincio, dal Lago di Garda al Po, ricostruito come tavola tecnica esplorabile." action={<span className="live-status"><i></i> Live · aggiornato ora</span>} /><section className="hydraulic-card"><div className="card-heading"><div><p className="eyebrow">SCHEMA IDRAULICO DEL MINCIO · REV. 2025</p><h2>Dal Garda al Po</h2></div><span className="small-label">Seleziona un'opera per i dati</span></div><HydraulicNetworkMap /><div className="hydraulic-note"><span className="note-symbol">i</span><p><strong>Come leggere lo schema</strong><br />Le frecce indicano il normale verso di deflusso. I nodi colorati sono dighe, chiuse, canali, scaricatori e stazioni che possono regolare o limitare la portata.</p></div></section></div>
+  return <div className="page"><PageIntro eyebrow="CONTROLLO DELLE OPERE" title="La rete idraulica." copy="Uno schema semplificato dello stato delle dighe e dei flussi che attraversano il bacino." action={<span className="live-status"><i></i> Live · aggiornato ora</span>} /><div className="dam-status-grid"><div><span>Opere monitorate</span><strong>5 <small>/ 5</small></strong></div><div><span>Regolazione attiva</span><strong>3</strong></div><div><span>Portata in uscita</span><strong>42,6 <small>m³/s</small></strong></div><div><span>Allerta operativa</span><strong className="green-text">Nessuna</strong></div></div><section className="hydraulic-card"><div className="card-heading"><div><p className="eyebrow">SCHEMA IN TEMPO REALE</p><h2>Da monte a valle</h2></div><span className="small-label">Flusso dell'acqua →</span></div><div className="hydraulic-flow"><div className="flow-node source"><span className="node-icon">≈</span><strong>Alto Micio</strong><small>Afflusso 56,1 m³/s</small></div><div className="flow-line"><i></i><span>56,1 m³/s</span></div><DamNode name="Diga Nord" code="DN-01" state="Aperta 32%" open /><div className="flow-line"><i></i><span>42,6 m³/s</span></div><DamNode name="Diga Centrale" code="DC-02" state="Aperta 18%" open /><div className="flow-line"><i></i><span>38,9 m³/s</span></div><DamNode name="Diga Sud" code="DS-03" state="Chiusa" /><div className="flow-line muted-line"><i></i><span>Valle del Micio</span></div></div><div className="hydraulic-note"><span className="note-symbol">i</span><p><strong>Come leggere lo schema</strong><br />Le percentuali indicano l'apertura delle paratoie. Il flusso viene regolato per mantenere la portata minima vitale nel tratto a valle.</p></div></section></div>
 }
-
-type HydraulicAsset = { name: string; kind: string; code: string; flow: string; state: string; risk: string; color: string }
-
-const hydraulicAssets: HydraulicAsset[] = [
-  { name: 'Diga di Salionze', kind: 'Diga / regolatore', code: 'GAR-01', flow: '42,6 m³/s in uscita', state: 'Paratoie aperte 32%', risk: 'Può ridurre l’afflusso dal Garda', color: 'amber' },
-  { name: 'Canale Virgilio', kind: 'Derivazione irrigua', code: 'DER-04', flow: '13,5 m³/s derivati', state: 'In esercizio', risk: 'Prelievo agricolo sulla portata principale', color: 'red' },
-  { name: 'Chiusa di Valeggio', kind: 'Chiusa + centrale', code: 'REG-02', flow: '38,9 m³/s in uscita', state: 'Regolata', risk: 'Rallentamento locale del deflusso', color: 'teal' },
-  { name: 'Canale Seriola', kind: 'Canale di adduzione', code: 'DER-07', flow: '4,2 m³/s immessi', state: 'Attivo', risk: 'Collegamento con rete secondaria', color: 'blue' },
-  { name: 'Scaricatore di Pozzolo', kind: 'Scaricatore / derivatore', code: 'SCA-03', flow: '34,2 m³/s in uscita', state: 'Paratoie aperte 18%', risk: 'Deviazione verso la Fossa di Pozzolo', color: 'magenta' },
-  { name: 'Naviglio di Goito', kind: 'Nodo di distribuzione', code: 'NOD-05', flow: '31,8 m³/s in uscita', state: 'Regolato', risk: 'Distribuzione verso gli usi irrigui', color: 'green' },
-  { name: 'Stazione di Casale', kind: 'Stazione di controllo', code: 'AIP-06', flow: '29,6 m³/s verso Mantova', state: 'Monitorata', risk: 'Misura e limita la portata di valle', color: 'teal' },
-  { name: 'Botte sifone di Formigosa', kind: 'Attraversamento / derivazione', code: 'BOT-08', flow: '2,1 m³/s verso Fissero', state: 'In esercizio', risk: 'Passaggio verso il sistema Fissero-Tartaro', color: 'gold' },
-  { name: 'Conca di S. Leone', kind: 'Conca / scaricatore', code: 'CON-09', flow: '27,8 m³/s al Po', state: 'Regolata', risk: 'Ultimo punto di controllo prima del Po', color: 'amber' },
-]
-
-function HydraulicNetworkMap() {
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const [origin, setOrigin] = useState({ x: 0, y: 0 })
-  const [selected, setSelected] = useState<HydraulicAsset | null>(null)
-  const changeZoom = (amount: number) => setZoom((current) => Math.min(1.55, Math.max(.8, current + amount)))
-  const reset = () => { setZoom(1); setOffset({ x: 0, y: 0 }) }
-  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => { setDragging(true); setOrigin({ x: event.clientX - offset.x, y: event.clientY - offset.y }); event.currentTarget.setPointerCapture(event.pointerId) }
-  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => { if (dragging) setOffset({ x: event.clientX - origin.x, y: event.clientY - origin.y }) }
-
-  return <div className="hydraulic-network-wrap"><div className="map-controls"><button onClick={() => changeZoom(.1)} aria-label="Ingrandisci schema">+</button><button onClick={() => changeZoom(-.1)} aria-label="Riduci schema">−</button><button onClick={reset} aria-label="Reimposta schema">⌂</button><span>{Math.round(zoom * 100)}%</span></div><div className="network-legend"><span><i className="legend-flow-line"></i> corso principale</span><span><i className="legend-arrow">→</i> verso valle</span><span><i className="legend-facility"></i> opera di regolazione</span></div><div className={`hydraulic-map-viewport network-viewport ${dragging ? 'dragging' : ''}`} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => setDragging(false)} onPointerCancel={() => setDragging(false)} onDoubleClick={() => changeZoom(.15)}><div className="network-route" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}><div className="network-source"><span className="network-icon lake-icon">≈</span><div><strong>Lago di Garda</strong><small>Sorgente del sistema · 56,1 m³/s</small></div></div><div className="network-flow-arrow">↓<small>56,1 m³/s</small></div>{hydraulicAssets.map((asset, index) => <div className="network-step" key={asset.code}><button className={`network-asset ${asset.color} ${selected?.code === asset.code ? 'selected' : ''}`} onClick={(event) => { event.stopPropagation(); setSelected(asset) }}><span className="asset-glyph">{asset.kind.includes('Canale') ? '≈' : asset.kind.includes('Stazione') ? '⌁' : '⌇'}</span><span><strong>{asset.name}</strong><small>{asset.kind} · {asset.code}</small></span><b>{asset.state}</b><em>›</em></button>{index < hydraulicAssets.length - 1 && <div className="network-flow-arrow">↓<small>{asset.flow}</small></div>}</div>)}<div className="network-source po-source"><span className="network-icon po-icon">Po</span><div><strong>Fiume Po</strong><small>Uscita dal sistema · 27,8 m³/s</small></div></div></div></div>{selected && <aside className="asset-detail"><button onClick={() => setSelected(null)} aria-label="Chiudi dettagli">×</button><p className="eyebrow">OPERA {selected.code}</p><h3>{selected.name}</h3><span className={`asset-type ${selected.color}`}>{selected.kind}</span><div className="asset-data"><div><span>Portata rilevata</span><strong>{selected.flow}</strong></div><div><span>Stato</span><strong>{selected.state}</strong></div></div><p className="asset-risk"><b>Funzione nel sistema</b>{selected.risk}</p></aside>}</div>
-}
-
-function HydraulicMap() {
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const [origin, setOrigin] = useState({ x: 0, y: 0 })
-  const changeZoom = (amount: number) => setZoom((current) => Math.min(1.55, Math.max(.8, current + amount)))
-  const reset = () => { setZoom(1); setOffset({ x: 0, y: 0 }) }
-  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => { setDragging(true); setOrigin({ x: event.clientX - offset.x, y: event.clientY - offset.y }); event.currentTarget.setPointerCapture(event.pointerId) }
-  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => { if (dragging) setOffset({ x: event.clientX - origin.x, y: event.clientY - origin.y }) }
-
-  return <div className="hydraulic-map-wrap flow-map-wrap"><div className="map-controls"><button onClick={() => changeZoom(.1)} aria-label="Ingrandisci schema">+</button><button onClick={() => changeZoom(-.1)} aria-label="Riduci schema">−</button><button onClick={reset} aria-label="Reimposta schema">⌂</button><span>{Math.round(zoom * 100)}%</span></div><div className={`hydraulic-map-viewport flow-map-viewport ${dragging ? 'dragging' : ''}`} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => setDragging(false)} onPointerCancel={() => setDragging(false)} onDoubleClick={() => changeZoom(.15)}><div className="flow-route" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}><div className="flow-source"><span className="flow-icon">≈</span><strong>Lago di Garda</strong><small>Afflusso nel Mincio · 56,1 m³/s</small></div><FlowConnector value="56,1 m³/s" /><FlowDam name="Diga di Salionze" code="Regolazione Garda-Mincio" output="42,6 m³/s in uscita" state="Aperta 32%" /><FlowBranch label="Canale Virgilio" value="13,5 m³/s derivati" color="red" /><FlowConnector value="42,6 m³/s" /><FlowDam name="Valeggio sul Mincio" code="Centrale Buse · Centrale Montecorno" output="38,9 m³/s in uscita" state="Regolata" /><FlowBranch label="Canale Seriola · Depuratore Peschiera" value="4,2 m³/s immessi" color="blue" /><FlowConnector value="38,9 m³/s" /><FlowDam name="Scaricatore di Pozzolo" code="Derivazione irrigua" output="34,2 m³/s in uscita" state="Aperta 18%" /><FlowBranch label="Fossa di Pozzolo" value="4,7 m³/s derivati" color="magenta" /><FlowConnector value="34,2 m³/s" /><FlowDam name="Naviglio di Goito" code="Nodo di distribuzione" output="31,8 m³/s in uscita" state="Aperta 18%" /><FlowBranch label="Scolo Caldone · Depuratore Goito" value="2,4 m³/s confluenti" color="green" /><FlowConnector value="31,8 m³/s" /><FlowDam name="Stazione di Casale" code="AIPO · controllo portata" output="29,6 m³/s verso Mantova" state="Monitorata" /><FlowConnector value="29,6 m³/s" /><FlowDam name="Laghi di Mantova" code="Paiolo alto · Paiolo basso" output="27,8 m³/s verso valle" state="Livello stabile" /><FlowBranch label="Botte sifone di Formigosa" value="2,1 m³/s verso Fissero-Tartaro" color="gold" /><FlowConnector value="27,8 m³/s" /><FlowDam name="Conca di S. Leone" code="Canale Gherardo · Scaricatore Vallazza" output="27,8 m³/s al Po" state="Regolata" /><FlowConnector value="27,8 m³/s" /><div className="flow-source flow-po"><span className="flow-icon">Po</span><strong>Fiume Po</strong><small>Uscita dal sistema del Mincio</small></div></div></div></div>
-}
-
-function FlowConnector({ value }: { value: string }) { return <div className="flow-connector"><span>{value}</span><i></i></div> }
-function FlowDam({ name, code, output, state }: { name: string; code: string; output: string; state: string }) { return <div className="flow-dam"><div className="flow-dam-art"><span></span><span></span><span></span></div><div><strong>{name}</strong><small>{code}</small><b>{state}</b></div><div className="flow-output"><span>PORTATA IN USCITA</span><strong>{output}</strong></div></div> }
-function FlowBranch({ label, value, color }: { label: string; value: string; color: string }) { return <div className={`flow-branch ${color}`}><span>↗</span><div><strong>{label}</strong><small>{value}</small></div></div> }
-
-function LegacyHydraulicMap() {
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const [origin, setOrigin] = useState({ x: 0, y: 0 })
-
-  const changeZoom = (amount: number) => setZoom((current) => Math.min(2.2, Math.max(.65, current + amount)))
-  const reset = () => { setZoom(1); setOffset({ x: 0, y: 0 }) }
-  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => { setDragging(true); setOrigin({ x: event.clientX - offset.x, y: event.clientY - offset.y }); event.currentTarget.setPointerCapture(event.pointerId) }
-  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => { if (dragging) setOffset({ x: event.clientX - origin.x, y: event.clientY - origin.y }) }
-
-  return <div className="hydraulic-map-wrap"><div className="map-controls"><button onClick={() => changeZoom(.15)} aria-label="Ingrandisci schema">+</button><button onClick={() => changeZoom(-.15)} aria-label="Riduci schema">−</button><button onClick={reset} aria-label="Reimposta schema">⌂</button><span>{Math.round(zoom * 100)}%</span></div><div className={`hydraulic-map-viewport ${dragging ? 'dragging' : ''}`} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => setDragging(false)} onPointerCancel={() => setDragging(false)} onDoubleClick={() => changeZoom(.25)} onWheel={(event) => { event.preventDefault(); changeZoom(event.deltaY > 0 ? -.1 : .1) }}><svg className="hydraulic-map-svg" viewBox="0 0 1200 1680" role="img" aria-label="Schema idraulico dettagliato del fiume Mincio" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}><defs><marker id="arrow-green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4d9977" /></marker><marker id="arrow-black" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#475b52" /></marker></defs><rect width="1200" height="1680" fill="#f8faf5" /><path className="svg-main-flow" d="M560 120 L560 1570" markerEnd="url(#arrow-green)" /><path className="svg-branch red" d="M560 270 L250 270 L250 350" markerEnd="url(#arrow-black)" /><path className="svg-branch blue" d="M560 360 L890 360" markerEnd="url(#arrow-green)" /><path className="svg-branch magenta" d="M560 620 L930 620" markerEnd="url(#arrow-green)" /><path className="svg-branch green" d="M560 830 L840 830 L840 1040" markerEnd="url(#arrow-green)" /><path className="svg-branch gold" d="M560 1040 L260 1040 L260 1130" markerEnd="url(#arrow-black)" /><path className="svg-branch black" d="M560 1220 L900 1380" markerEnd="url(#arrow-black)" /><path className="svg-branch black" d="M560 1430 L930 1510" markerEnd="url(#arrow-black)" /><SvgLake x="490" y="55" label="Lago di Garda" /><SvgGate x="535" y="155" label="Diga di Salionze" status="Aperta 32%" /><SvgStation x="560" y="315" label="Stazione di Monzambano" detail="ARPA · Q dal 01/02/2001" /><SvgGate x="535" y="455" label="Centrale Buse" status="Regolazione attiva" /><SvgStation x="560" y="555" label="Valeggio sul Mincio" detail="Centrale Montecorno" /><SvgGate x="535" y="700" label="Scaricatore di Pozzolo" status="Aperta 18%" /><SvgGate x="535" y="790" label="Naviglio di Goito" status="Aperta 18%" /><SvgStation x="560" y="900" label="Stazione di Casale" detail="AIPO" /><SvgLake x="490" y="1100" label="Laghi di Mantova" /><SvgGate x="535" y="1280" label="Canale Gherardo" status="Nodo di regolazione" /><SvgGate x="535" y="1430" label="Conca di S. Leone" status="Regolata" /><SvgLake x="490" y="1540" label="Fiume Po" /><SvgLabel x="75" y="245" text="Canale Virgilio" color="#b33d3d" /><SvgLabel x="905" y="345" text="Canale Seriola" color="#3158c7" /><SvgLabel x="945" y="605" text="Derivazione Fossa di Pozzolo" color="#ae4b9d" /><SvgLabel x="850" y="850" text="Naviglio di Goito" color="#4caa4c" /><SvgLabel x="60" y="1035" text="Cavo Osone Vecchio / Nuovo" color="#af7927" /><SvgLabel x="910" y="1365" text="Botte sifone di Formigosa" color="#475b52" /><SvgLabel x="940" y="1500" text="Fissero-Tartaro" color="#475b52" /><text x="78" y="1610" className="svg-title">MINCIO · SCHEMA IDRAULICO · REV. 2025</text><g className="svg-legend"><rect x="875" y="75" width="260" height="190" rx="4" /><text x="900" y="108" className="svg-legend-title">LEGENDA</text><SvgLegendItem y="135" type="lake" text="Laghi e corpi idrici" /><SvgLegendItem y="160" type="station" text="Stazioni di monitoraggio" /><SvgLegendItem y="185" type="gate" text="Derivazioni / biforcazioni" /><SvgLegendItem y="210" type="flow" text="Immissioni / confluenze" /><SvgLegendItem y="235" type="ground" text="Alimentazione falda" /></g></svg></div></div>
-}
-
-function SvgLake({ x, y, label }: { x: string; y: string; label: string }) { return <g className="svg-node"><path d={`M${x} ${y} q35 -18 70 0 v33 q-35 18 -70 0z`} fill="#99c9ee" stroke="#2e4c57" strokeWidth="2" /><text x={Number(x) + 85} y={Number(y) + 19} className="svg-node-label">{label}</text></g> }
-function SvgStation({ x, y, label, detail }: { x: string; y: string; label: string; detail: string }) { return <g className="svg-node"><ellipse cx={x} cy={y} rx="18" ry="10" fill="#fffdf8" stroke="#333" strokeWidth="2" /><text x={Number(x) + 30} y={Number(y) + 3} className="svg-node-label">{label}</text><text x={Number(x) + 30} y={Number(y) + 20} className="svg-node-detail">{detail}</text></g> }
-function SvgGate({ x, y, label, status }: { x: string; y: string; label: string; status: string }) { return <g className="svg-node"><path d={`M${x} ${y} l30 30 m0 -30 l-30 30`} stroke="#e33b35" strokeWidth="10" /><text x={Number(x) + 48} y={Number(y) + 14} className="svg-node-label strong">{label}</text><text x={Number(x) + 48} y={Number(y) + 31} className="svg-node-detail">{status}</text></g> }
-function SvgLabel({ x, y, text, color }: { x: string; y: string; text: string; color: string }) { return <text x={x} y={y} fill={color} className="svg-branch-label">{text}</text> }
-function SvgLegendItem({ y, type, text }: { y: string; type: string; text: string }) { return <g><circle cx="900" cy={y} r="7" className={`legend-symbol ${type}`} /><text x="920" y={Number(y) + 4} className="svg-legend-text">{text}</text></g> }
 
 function DamNode({ name, code, state, open }: { name: string; code: string; state: string; open?: boolean }) { return <div className={`dam-node ${open ? 'open' : ''}`}><div className="dam-illustration"><span></span><span></span><span></span></div><strong>{name}</strong><small>{code}</small><b>{state}</b></div> }
 
@@ -178,12 +158,4 @@ function ReportsPage({ noticeSent, setNoticeSent }: { noticeSent: boolean; setNo
 
 export default App
 
-type MincioWindow = Window & { __mincioRoot?: ReturnType<typeof createRoot> }
-
-const rootElement = document.getElementById('root')
-if (!rootElement) throw new Error('Elemento root non trovato')
-
-const mincioWindow = window as MincioWindow
-const root = mincioWindow.__mincioRoot ?? createRoot(rootElement)
-mincioWindow.__mincioRoot = root
-root.render(<App />)
+createRoot(document.getElementById('root')!).render(<App />)
