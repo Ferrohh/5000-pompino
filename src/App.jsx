@@ -32,9 +32,22 @@ export default function App() {
         {page === "home" && (
           <>
             <section className="hero">
-              <h1>I dati dell’acqua,<br />aperti a tutti.</h1>
-              <p>Consulta livelli, portate, regole di distribuzione e lo schema del bacino del Mincio.</p>
+              <h1>I Dati dell’Acqua, aperti a tutti.</h1>
+              <p>
+                Consulta livelli, portate, regole di distribuzione e lo schema del
+                bacino del Mincio.
+              </p>
+
+              <div className="search-box">
+                <span>⌕</span>
+                <input
+                  type="search"
+                  placeholder={'Cerca: "Livelli Goito oggi", "Priorità agricoltura", "Schema Diga" ...'}
+                />
+                <button>Cerca</button>
+              </div>
             </section>
+
             <div className="cards">
               {[
                 ["🗺️", "Mappa Sensori", "Livelli e portate in tempo reale.", "sensors"],
@@ -43,7 +56,9 @@ export default function App() {
                 ["📷", "Segnalazioni", "Geolocalizza criticità ambientali.", "reports"],
               ].map(([icon, title, text, target]) => (
                 <button className="card" onClick={() => setPage(target)} key={title}>
-                  <span>{icon}</span><h2>{title}</h2><p>{text}</p>
+                  <span>{icon}</span>
+                  <h2>{title}</h2>
+                  <p>{text}</p>
                 </button>
               ))}
             </div>
