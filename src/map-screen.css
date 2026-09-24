@@ -1,0 +1,160 @@
+.map-screen-page {
+  position: relative;
+  max-width: none;
+  height: calc(100dvh - 76px);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.map-screen-page .map-layout {
+  position: absolute;
+  inset: 0;
+  display: block;
+  z-index: 1;
+}
+
+.map-screen-page .mantova-map-panel {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  z-index: 1;
+}
+
+.map-screen-page .map-search-control {
+  position: fixed;
+  z-index: 20;
+  top: 14px;
+  right: 3vw;
+  margin: 0;
+}
+
+.map-search-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #2d665b;
+  border-radius: 50%;
+  background: #2d665b;
+  color: #fff;
+  box-shadow: 0 7px 22px rgba(30, 68, 47, .12);
+}
+
+.map-search-toggle:hover { background: #f1f7f0; }.map-search-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 1.8; }
+.map-search-toggle:hover { background: #24564d; }.map-search-toggle svg { width: 17px; height: 17px; }.map-search-panel { position: absolute; top: 0; right: 50px; width: 280px; padding: 7px 10px; border: 1px solid #4c9a79; border-radius: 999px; background: rgba(251, 250, 247, .98); box-shadow: 0 10px 28px rgba(30, 68, 47, .18); }.map-search-panel input { width: 100%; padding: 8px 13px; border: 0; border-radius: 999px; outline: 0; background: transparent; color: #315d51; font-size: 11px; }.map-search-results { display: grid; gap: 3px; margin: 7px -3px 0; max-height: 230px; overflow-y: auto; }.map-search-results button { display: block; width: 100%; padding: 9px 8px; border: 0; border-radius: 999px; background: transparent; color: #315d51; text-align: left; }.map-search-results button:hover { background: #edf5ed; }.map-search-results strong, .map-search-results small { display: block; }.map-search-results strong { font-size: 11px; }.map-search-results small { margin-top: 3px; color: #82958b; font: 9px 'DM Mono'; }.map-search-results > span { display: block; padding: 10px 8px; color: #82958b; font-size: 10px; }
+
+.map-screen-page .mantova-map-frame {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: #dfe9de;
+}
+
+.map-screen-page .mantova-map {
+  height: 100%;
+}
+
+.map-screen-page .selected-point-card {
+  position: absolute;
+  z-index: 3;
+  left: 5.2vw;
+  right: 5.2vw;
+  bottom: 22px;
+  width: auto;
+  height: 104px;
+  margin: 0;
+  background: rgba(246, 250, 244, .96);
+  box-shadow: 0 8px 24px rgba(30, 68, 47, .15);
+}
+
+.map-screen-page .mantova-list {
+  position: absolute;
+  z-index: 9;
+  left: 5.2vw;
+  right: 5.2vw;
+  bottom: 22px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px;
+  border: 1px solid rgba(226, 232, 224, .95);
+  background: rgba(251, 250, 247, .94);
+  box-shadow: 0 10px 30px rgba(30, 68, 47, .18);
+  scrollbar-width: thin;
+}
+
+.map-screen-page .mantova-map-frame {
+  z-index: 1;
+}
+
+.map-screen-page .mantova-list .list-header {
+  flex: 0 0 80px;
+  display: block;
+  padding: 8px 10px;
+  border: 0;
+  border-right: 1px solid #e6ebe5;
+}
+
+.map-screen-page .mantova-list .filter-button {
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.map-screen-page .mantova-list .sensor-row {
+  flex: 0 0 245px;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid #e3eae2;
+  border-radius: 5px;
+  background: rgba(255, 255, 251, .88);
+}
+
+.map-screen-page .mantova-list .sensor-row:hover,
+.map-screen-page .mantova-list .sensor-row.selected {
+  background: #f1f7f0;
+  border-color: #9fc7aa;
+}
+
+@media (max-width: 720px) {
+  .map-screen-page {
+    height: calc(100dvh - 58px);
+    min-height: 0;
+  }
+
+  .map-screen-page .map-search-control {
+    top: 5px;
+    right: 12px;
+  }
+
+  .map-screen-page .map-search-toggle { width: 36px; height: 36px; }.map-screen-page .map-search-panel { top: 0; right: 44px; width: min(260px, calc(100vw - 32px)); }.map-screen-page .mantova-list {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 7px;
+  }
+
+  .map-screen-page .mantova-list .list-header {
+    flex-basis: 56px;
+  }
+
+  .map-screen-page .mantova-list .sensor-row {
+    flex-basis: 220px;
+    min-height: 68px;
+  }
+
+  .map-screen-page .selected-point-card {
+    left: 20px;
+    right: 20px;
+    bottom: 12px;
+    width: auto;
+    height: 96px;
+    display: block;
+  }
+}

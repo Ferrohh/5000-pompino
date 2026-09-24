@@ -29,6 +29,11 @@ button { cursor: pointer; }
 .mantova-pin::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: rgba(255,255,255,.92); }
 .mantova-pin.warning { background: #e1a14d; }
 .mantova-pin.selected { transform: rotate(-45deg) scale(1.2); box-shadow: 0 10px 22px rgba(27, 64, 49, .36); }
+.mantova-pin.circle { transform: none; border-radius: 50%; }
+.mantova-pin.square { transform: none; border-radius: 4px; }
+.mantova-pin.diamond { transform: rotate(45deg); border-radius: 4px; }
+.mantova-pin.circle.selected, .mantova-pin.square.selected { transform: scale(1.2); }
+.mantova-pin.diamond.selected { transform: rotate(45deg) scale(1.2); }
 .mantova-popup h3 { margin: 0 0 4px; font-size: 16px; }
 .mantova-popup strong { display: block; color: #56736a; font-size: 11px; margin-bottom: 8px; }
 .mantova-popup p { margin: 0 0 8px; color: #70847d; font-size: 11px; line-height: 1.5; }

@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import MapPage, { LeafletMantovaMap } from './MapPage'
 import 'leaflet/dist/leaflet.css'
 import './styles.css'
+import './hero-contrast.css'
+import './map-screen.css'
 
 type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni'
 type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
@@ -11,6 +13,7 @@ type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
 export type MantovaPoint = {
   id: string
   name: string
+  icon: 'pin' | 'circle' | 'square' | 'diamond'
   lat: number
   lng: number
   status: 'Ottimale' | 'Attenzione'
@@ -21,6 +24,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '01',
     name: 'Peschiera del Garda',
+    icon: 'pin',
     lat: 45.440277,
     lng: 10.698333,
     status: 'Ottimale',
@@ -29,6 +33,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '02',
     name: 'Salionze Mandracchio Virgilio',
+    icon: 'circle',
     lat: 45.393888,
     lng: 10.709444,
     status: 'Attenzione',
@@ -37,6 +42,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '03',
     name: 'Salionze canale Seriola',
+    icon: 'diamond',
     lat: 45.392777,
     lng: 10.710833,
     status: 'Ottimale',
@@ -45,6 +51,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '04',
     name: 'Salionze Mincio',
+    icon: 'square',
     lat: 45.392777,
     lng: 10.706111,
     status: 'Ottimale',
@@ -53,6 +60,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '05',
     name: 'Casale di Goito',
+    icon: 'pin',
     lat: 45.223888,
     lng: 10.677500,
     status: 'Ottimale',
@@ -61,6 +69,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '06',
     name: 'Pozzolo',
+    icon: 'circle',
     lat: 45.301666,
     lng: 10.713333,
     status: 'Ottimale',
@@ -93,6 +102,10 @@ function App() {
   const [page, setPage] = useState<Page>('home')
   const [noticeSent, setNoticeSent] = useState(false)
 
+  useEffect(() => {
+    document.querySelector<HTMLInputElement>('.report-file')?.setAttribute('capture', 'environment')
+  }, [page])
+
   const navigate = (next: Page) => {
     setPage(next)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -103,21 +116,17 @@ function App() {
       <aside className="sidebar">
         <div className="brand" onClick={() => navigate('home')} role="button" tabIndex={0}>
           <div className="brand-mark"><span></span><span></span><span></span></div>
-          <div><strong>micio</strong><small>MONITOR</small></div>
+          <div><strong>mincio</strong><small>MONITOR</small></div>
         </div>
         <div className="live-pill"><span className="live-dot"></span> DATI IN DIRETTA</div>
         <nav>
           <p className="nav-label">ESPLORA</p>
           {navItems.map((item) => <button className={`nav-item ${page === item.id ? 'active' : ''}`} key={item.id} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.label}</span>{item.id === 'segnalazioni' && <span className="nav-badge">2</span>}</button>)}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="help-box"><span className="help-icon">?</span><div><strong>Hai trovato un problema?</strong><p>Segnalalo al team Micio</p></div></div>
-          <div className="last-update"><span className="live-dot"></span><span>Ultimo aggiornamento<br /><strong>24 settembre 2026, 14:32</strong></span></div>
-        </div>
       </aside>
 
       <main className="main-content">
-        <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div><div className="topbar-actions"><span className="location"><span className="location-pin">⌖</span> Bacino del Micio</span><button className="icon-button" aria-label="Notifiche"><Icon name="alert" /><span className="notification-dot"></span></button><div className="avatar">MC</div></div></header>
+        <header className="topbar"><div className="breadcrumb"><span>Territorio</span><b>/</b><strong>{navItems.find((item) => item.id === page)?.label}</strong></div></header>
         {page === 'home' && <Home navigate={navigate} />}
         {page === 'mappa' && <MapPage />}
         {page === 'bilancio' && <BalancePage />}
