@@ -25,15 +25,31 @@ button { cursor: pointer; }
 .mantova-map { height: 100%; width: 100%; }
 .mantova-map.leaflet-container { background: #dfe9de; }
 .mantova-marker-icon { background: transparent; border: 0; }
-.mantova-pin { position: relative; display: block; width: 18px; height: 18px; border-radius: 50% 50% 50% 0; background: #58a17b; transform: rotate(-45deg); box-shadow: 0 8px 18px rgba(27, 64, 49, .28); border: 2px solid rgba(255,255,255,.96); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
-.mantova-pin::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: rgba(255,255,255,.92); }
-.mantova-pin.warning { background: #e1a14d; }
-.mantova-pin.selected { transform: rotate(-45deg) scale(1.2); box-shadow: 0 10px 22px rgba(27, 64, 49, .36); }
-.mantova-pin.circle { transform: none; border-radius: 50%; }
-.mantova-pin.square { transform: none; border-radius: 4px; }
-.mantova-pin.diamond { transform: rotate(45deg); border-radius: 4px; }
-.mantova-pin.circle.selected, .mantova-pin.square.selected { transform: scale(1.2); }
-.mantova-pin.diamond.selected { transform: rotate(45deg) scale(1.2); }
+.mantova-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #3c7d61;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(27, 64, 49, .32);
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.mantova-pin svg {
+  display: block;
+  stroke: #ffffff;
+}
+.mantova-pin.warning {
+  background: #e1a14d;
+}
+.mantova-pin.selected {
+  transform: scale(1.25);
+  box-shadow: 0 8px 20px rgba(27, 64, 49, .45);
+  border-color: #fef08a;
+}
 .mantova-popup h3 { margin: 0 0 4px; font-size: 16px; }
 .mantova-popup strong { display: block; color: #56736a; font-size: 11px; margin-bottom: 8px; }
 .mantova-popup p { margin: 0 0 8px; color: #70847d; font-size: 11px; line-height: 1.5; }

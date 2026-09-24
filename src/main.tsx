@@ -9,13 +9,15 @@ import './map-screen.css'
 import './history.css'
 import './history-overrides.css'
 
+import type { PointIconType } from './icons'
+
 type Page = 'home' | 'mappa' | 'bilancio' | 'dighe' | 'segnalazioni' | 'storico'
 type IconName = 'home' | 'map' | 'water' | 'dam' | 'alert'
 
 export type MantovaPoint = {
   id: string
   name: string
-  icon: 'pin' | 'circle' | 'square' | 'diamond'
+  icon: PointIconType
   description: string
   lat: number
   lng: number
@@ -27,7 +29,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '01',
     name: 'Peschiera del Garda',
-    icon: 'pin',
+    icon: 'barca',
     description: 'Punto di ingresso del Mincio dal Lago di Garda.',
     lat: 45.440277,
     lng: 10.698333,
@@ -37,7 +39,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '02',
     name: 'Salionze Mandracchio Virgilio',
-    icon: 'circle',
+    icon: 'goccia',
     description: 'Nodo di regolazione tra il corso principale e il canale Virgilio.',
     lat: 45.393888,
     lng: 10.709444,
@@ -47,7 +49,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '03',
     name: 'Salionze canale Seriola',
-    icon: 'diamond',
+    icon: 'goccia',
     description: 'Derivazione laterale collegata alla rete della Seriola.',
     lat: 45.392777,
     lng: 10.710833,
@@ -57,7 +59,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '04',
     name: 'Salionze Mincio',
-    icon: 'square',
+    icon: 'goccia',
     description: 'Rilevatore sul corso principale subito a valle di Salionze.',
     lat: 45.392777,
     lng: 10.706111,
@@ -67,7 +69,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '05',
     name: 'Casale di Goito',
-    icon: 'pin',
+    icon: 'goccia',
     description: 'Stazione di controllo del livello nella valle del Mincio.',
     lat: 45.223888,
     lng: 10.677500,
@@ -77,7 +79,7 @@ const mantovaPoints: MantovaPoint[] = [
   {
     id: '06',
     name: 'Pozzolo',
-    icon: 'circle',
+    icon: 'goccia',
     description: 'Punto di monitoraggio vicino alla derivazione di Pozzolo.',
     lat: 45.301666,
     lng: 10.713333,
