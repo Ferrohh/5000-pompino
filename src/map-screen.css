@@ -166,3 +166,785 @@
     align-self: flex-end;
   }
 }
+
+.hydraulic-live-map {
+  overflow: hidden;
+  height: min(540px, 58vh);
+  min-height: 380px;
+  margin: 0 -1px 14px;
+  border: 1px solid #dbe6da;
+  border-radius: 5px;
+  background: #dfe9de;
+}
+
+.dam-status-grid {
+  display: none !important;
+}
+
+.hydraulic-live-map .mantova-map {
+  height: 100%;
+}
+
+.hydraulic-map-selection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid #d4e2d5;
+  border-radius: 5px;
+  background: #f3f8f1;
+}
+
+.hydraulic-map-selection .eyebrow {
+  margin-bottom: 5px;
+}
+
+.hydraulic-map-selection strong,
+.hydraulic-map-selection span {
+  display: block;
+}
+
+.hydraulic-map-selection strong {
+  color: #2c5947;
+  font-size: 14px;
+}
+
+.hydraulic-map-selection span {
+  margin-top: 4px;
+  color: #71877b;
+  font-size: 10px;
+}
+
+.hydraulic-map-selection .primary-button {
+  flex: 0 0 auto;
+}
+
+.image-schema-wrap {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d9e4d8;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.image-schema-toolbar,
+.image-schema-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 15px;
+  color: #70867b;
+  font: 9px 'DM Mono';
+}
+
+.image-schema-toolbar {
+  border-bottom: 1px solid #e1e9df;
+  background: #f8fbf7;
+}
+
+.image-schema-toolbar b {
+  color: #345f4d;
+  font-weight: 600;
+}
+
+.image-schema-stage {
+  position: relative;
+  line-height: 0;
+  background: #fff;
+}
+
+.source-schema-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.image-schema-points {
+  position: absolute;
+  inset: 0;
+}
+
+.image-schema-point {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: clamp(25px, 3.2vw, 38px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #bd1827;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(112, 14, 24, .28);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  line-height: 1;
+  transition: transform .15s, background .15s, box-shadow .15s;
+}
+
+.image-schema-point span {
+  font: 700 clamp(9px, 1vw, 13px) 'DM Mono';
+}
+
+.image-schema-point:hover,
+.image-schema-point.selected {
+  z-index: 2;
+  background: #7e1220;
+  box-shadow: 0 0 0 5px rgba(189, 24, 39, .18), 0 5px 12px rgba(112, 14, 24, .35);
+  transform: translate(-50%, -50%) scale(1.14);
+}
+
+.image-schema-caption {
+  justify-content: flex-start;
+  border-top: 1px solid #e1e9df;
+  background: #f8fbf7;
+}
+
+.image-schema-caption i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #bd1827;
+}
+
+.image-schema-caption small {
+  margin-left: auto;
+  color: #879b91;
+}
+
+.schema-modal-backdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(29, 53, 42, .34);
+}
+
+.schema-modal {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 30px;
+  border: 1px solid #d2e1d2;
+  border-radius: 7px;
+  background: #fffef9;
+  box-shadow: 0 18px 48px rgba(25, 55, 37, .22);
+}
+
+.schema-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: #edf4ec;
+  color: #527668;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.schema-modal-number {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: #bd1827;
+  color: #fff;
+  font: 700 13px 'DM Mono';
+}
+
+.schema-modal h3 {
+  max-width: 320px;
+  margin: 0 0 12px;
+  color: #315b4b;
+  font-size: 23px;
+  line-height: 1.1;
+}
+
+.schema-modal > p:not(.eyebrow) {
+  color: #6d8278;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.schema-modal-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0 14px;
+  padding: 13px 0;
+  border-top: 1px solid #e0e9df;
+  border-bottom: 1px solid #e0e9df;
+  color: #8a9a91;
+  font: 10px 'DM Mono';
+}
+
+.schema-modal-status strong {
+  color: #4a9673;
+}
+
+.schema-modal .schema-modal-help {
+  margin-bottom: 0;
+  color: #82938a;
+  font-size: 10px;
+}
+
+.pdf-schema-wrap {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d8e4d8;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.pdf-schema-toolbar,
+.pdf-schema-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 15px;
+  color: #668176;
+  font: 9px 'DM Mono';
+}
+
+.pdf-schema-toolbar {
+  border-bottom: 1px solid #e1e9df;
+  background: #f8fbf7;
+}
+
+.pdf-schema-toolbar b {
+  color: #345f4d;
+  font-weight: 600;
+}
+
+.pdf-schema-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pdf-schema-toolbar button {
+  width: 27px;
+  height: 27px;
+  border: 1px solid #d3e0d3;
+  border-radius: 3px;
+  background: #fffef9;
+  color: #4b876c;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.pdf-schema-toolbar button:hover {
+  background: #eaf4ea;
+}
+
+.pdf-schema-toolbar > div > span {
+  min-width: 38px;
+  text-align: center;
+}
+
+.pdf-schema-viewport {
+  height: min(650px, 68vh);
+  min-height: 480px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: #fff;
+}
+
+.pdf-schema-viewport:active {
+  cursor: grabbing;
+}
+
+.pdf-schema-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  transition: transform .12s ease-out;
+  user-select: none;
+}
+
+.pdf-water,
+.pdf-water-thin,
+.pdf-canal {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pdf-water {
+  stroke: #add9f0;
+  stroke-width: 44;
+}
+
+.pdf-water-thin {
+  stroke: #b4dff2;
+  stroke-width: 18;
+}
+
+.pdf-canal {
+  stroke: #9bcfe9;
+  stroke-width: 10;
+}
+
+.pdf-basin {
+  fill: #a4c900;
+  opacity: .92;
+}
+
+.pdf-basin-inner {
+  fill: none;
+  stroke: #c7e679;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+.pdf-place,
+.pdf-label,
+.pdf-label-vertical {
+  fill: #527267;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .25px;
+}
+
+.pdf-label-vertical {
+  writing-mode: vertical-rl;
+  font-size: 9px;
+}
+
+.pdf-marker {
+  cursor: pointer;
+}
+
+.pdf-marker circle {
+  fill: #bd1827;
+  stroke: #fff;
+  stroke-width: 4;
+  transition: r .15s, fill .15s;
+}
+
+.pdf-callout {
+  fill: none;
+  stroke: #b51d2b;
+  stroke-width: 2;
+  opacity: .85;
+  pointer-events: none;
+}
+
+.pdf-marker text {
+  fill: #fff;
+  font: 700 12px 'DM Mono';
+  pointer-events: none;
+}
+
+.pdf-marker:hover circle,
+.pdf-marker.selected circle {
+  fill: #7e1220;
+  r: 22px;
+}
+
+.pdf-marker.selected .pdf-callout,
+.pdf-marker:hover .pdf-callout {
+  stroke-width: 3;
+}
+
+.pdf-schema-legend {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  border-top: 1px solid #e1e9df;
+  background: #f8fbf7;
+}
+
+.pdf-schema-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-schema-legend small {
+  margin-left: auto;
+  color: #879b91;
+}
+
+.legend-water-swatch,
+.legend-basin-swatch,
+.legend-marker-swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  background: #add9f0;
+}
+
+.legend-basin-swatch {
+  background: #a4c900;
+}
+
+.legend-marker-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #bd1827;
+  color: #fff;
+  font: 700 9px 'DM Mono';
+}
+
+.pdf-schema-detail {
+  position: absolute;
+  right: 18px;
+  bottom: 49px;
+  display: flex;
+  gap: 11px;
+  width: min(300px, calc(100% - 36px));
+  padding: 13px;
+  border: 1px solid #cbdccc;
+  border-radius: 5px;
+  background: rgba(255, 254, 250, .96);
+  box-shadow: 0 7px 18px rgba(38, 79, 50, .13);
+}
+
+.pdf-schema-detail > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #bd1827;
+  color: #fff;
+  font: 700 10px 'DM Mono';
+}
+
+.pdf-schema-detail h3 {
+  margin: 0 0 5px;
+  color: #315b4b;
+  font-size: 15px;
+}
+
+.pdf-schema-detail p:not(.eyebrow) {
+  margin: 0 0 6px;
+  color: #71867c;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.pdf-schema-detail strong {
+  color: #4c9674;
+  font: 9px 'DM Mono';
+}
+
+.hydraulic-network-wrap {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d9e4d8;
+  border-radius: 5px;
+  background: #edf4ec;
+}
+
+.network-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #dbe5da;
+  background: rgba(255, 255, 251, .8);
+  color: #71867b;
+  font: 9px 'DM Mono';
+}
+
+.network-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-flow-line {
+  width: 22px;
+  height: 4px;
+  border-radius: 5px;
+  background: #4e9b78;
+}
+
+.legend-facility {
+  width: 13px;
+  height: 13px;
+  border: 2px solid #d79b4c;
+  border-radius: 50%;
+  background: #fff8e9;
+}
+
+.hydraulic-network-viewport {
+  position: relative;
+  height: min(620px, 68vh);
+  min-height: 470px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: radial-gradient(circle at 50% 12%, #f8fbf6 0, #edf4ec 65%, #e5eee4 100%);
+}
+
+.hydraulic-network-viewport:active {
+  cursor: grabbing;
+}
+
+.hydraulic-network-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  transition: transform .12s ease-out;
+  user-select: none;
+}
+
+.network-river {
+  fill: none;
+  stroke: #7db8df;
+  stroke-width: 25;
+  stroke-linecap: round;
+  opacity: .78;
+}
+
+.network-branch {
+  fill: none;
+  stroke: #a5cce7;
+  stroke-width: 13;
+  stroke-linecap: round;
+}
+
+.network-label {
+  fill: #6f8f82;
+  font: 600 14px 'DM Mono';
+  letter-spacing: 1px;
+}
+
+.network-asset-marker {
+  cursor: pointer;
+}
+
+.network-asset-marker circle {
+  fill: #fffef9;
+  stroke: #c94c55;
+  stroke-width: 4;
+  transition: fill .15s, stroke .15s, r .15s;
+}
+
+.network-asset-marker text:not(.asset-marker-label) {
+  fill: #b33e48;
+  font: 700 13px 'DM Mono';
+  pointer-events: none;
+}
+
+.network-asset-marker .asset-marker-label {
+  fill: #45675a;
+  font: 600 11px 'DM Sans';
+  pointer-events: none;
+}
+
+.network-asset-marker:hover circle,
+.network-asset-marker.selected circle {
+  fill: #c94c55;
+  stroke: #fffef9;
+  r: 22px;
+}
+
+.network-asset-marker:hover text:not(.asset-marker-label),
+.network-asset-marker.selected text:not(.asset-marker-label) {
+  fill: #fff;
+}
+
+.network-controls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid #d1ddd0;
+  border-radius: 5px;
+  background: rgba(255, 255, 252, .94);
+  box-shadow: 0 4px 14px rgba(42, 75, 53, .09);
+}
+
+.network-controls button {
+  width: 29px;
+  height: 29px;
+  border: 0;
+  border-radius: 3px;
+  background: #edf4ec;
+  color: #477260;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.network-controls button:hover {
+  background: #d9eadb;
+}
+
+.network-controls span {
+  min-width: 39px;
+  color: #75877d;
+  text-align: center;
+  font: 9px 'DM Mono';
+}
+
+.hydraulic-asset-detail {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 12px;
+  width: min(330px, calc(100% - 32px));
+  padding: 15px;
+  border: 1px solid #cadbca;
+  border-radius: 6px;
+  background: rgba(255, 254, 250, .96);
+  box-shadow: 0 8px 22px rgba(32, 69, 43, .14);
+}
+
+.asset-detail-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #c94c55;
+  color: #fff;
+  font: 700 11px 'DM Mono';
+}
+
+.hydraulic-asset-detail h3 {
+  margin: 0 0 6px;
+  color: #2d5647;
+  font-size: 16px;
+}
+
+.hydraulic-asset-detail p:not(.eyebrow) {
+  margin: 0 0 8px;
+  color: #6e8379;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.hydraulic-asset-detail strong {
+  color: #4a9975;
+  font: 9px 'DM Mono';
+}
+
+.hydraulic-map-link {
+  display: block;
+  margin: 14px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #3d896a;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.hydraulic-map-link span {
+  margin-left: 5px;
+  font-size: 15px;
+}
+
+@media (max-width: 720px) {
+  .hydraulic-live-map {
+    height: 480px;
+    min-height: 0;
+  }
+
+  .hydraulic-map-selection {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hydraulic-map-selection .primary-button {
+    align-self: flex-start;
+  }
+
+  .image-schema-toolbar,
+  .image-schema-caption {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .image-schema-caption small {
+    margin-left: 0;
+  }
+
+  .schema-modal {
+    padding: 25px 21px;
+  }
+
+  .pdf-schema-toolbar,
+  .pdf-schema-legend {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pdf-schema-toolbar > div {
+    align-self: flex-end;
+  }
+
+  .pdf-schema-viewport {
+    height: 510px;
+    min-height: 0;
+  }
+
+  .pdf-schema-svg {
+    width: 900px;
+    min-width: 900px;
+  }
+
+  .pdf-schema-legend small {
+    margin-left: 0;
+  }
+
+  .pdf-schema-detail {
+    right: 10px;
+    bottom: 66px;
+    width: min(270px, calc(100% - 20px));
+  }
+
+  .hydraulic-network-viewport {
+    height: 570px;
+    min-height: 0;
+  }
+
+  .hydraulic-network-svg {
+    width: 920px;
+    min-width: 920px;
+    transform-origin: 50% 50%;
+  }
+
+  .network-legend {
+    gap: 9px;
+    font-size: 8px;
+  }
+
+  .hydraulic-asset-detail {
+    right: 10px;
+    bottom: 10px;
+    width: min(290px, calc(100% - 20px));
+  }
+}

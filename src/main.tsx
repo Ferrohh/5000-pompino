@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import MapPage, { LeafletMantovaMap } from './MapPage'
+import PdfHydraulicSchema from './PdfHydraulicSchema'
+import ImageHydraulicSchema from './ImageHydraulicSchema'
 import type { PointIconType } from './icons'
 import 'leaflet/dist/leaflet.css'
 import './styles.css'
@@ -143,7 +145,7 @@ function App() {
         {page === 'home' && <Home navigate={navigate} />}
         {page === 'mappa' && <MapPage initialPoint={mapFocusPoint} onOpenHistory={(point) => { setHistoryPoint(point); setMapFocusPoint(null); navigate('storico') }} />}
         {page === 'bilancio' && <BalancePage />}
-        {page === 'dighe' && <DamsPage />}
+        {page === 'dighe' && <DamsPage onOpenMap={(point) => { setMapFocusPoint(point); navigate('mappa') }} />}
         {page === 'perche' && <WhyPage navigate={navigate} />}
         {page === 'segnalazioni' && <ReportsPage noticeSent={noticeSent} setNoticeSent={setNoticeSent} />}
         {page === 'storico' && historyPoint && <HistoryPage point={historyPoint} onBack={() => { setMapFocusPoint(historyPoint); setHistoryPoint(null); navigate('mappa') }} />}
@@ -280,8 +282,40 @@ function BalancePageLegacy() {
 
 function AllocationItem({ color, title, value, amount }: { color: string; title: string; value: string; amount: string }) { return <div className="allocation-item"><span><i className={color}></i>{title}</span><strong>{value}</strong><small>{amount}</small></div> }
 
-function DamsPage() {
-  return <div className="page"><PageIntro eyebrow="CONTROLLO DELLE OPERE" title="La rete idraulica." copy="Uno schema semplificato dello stato delle dighe e dei flussi che attraversano il bacino." action={<span className="live-status"><i></i> Live · aggiornato ora</span>} /><div className="dam-status-grid"><div><span>Opere monitorate</span><strong>5 <small>/ 5</small></strong></div><div><span>Regolazione attiva</span><strong>3</strong></div><div><span>Portata in uscita</span><strong>42,6 <small>m³/s</small></strong></div><div><span>Allerta operativa</span><strong className="green-text">Nessuna</strong></div></div><section className="hydraulic-card"><div className="card-heading"><div><p className="eyebrow">SCHEMA IN TEMPO REALE</p><h2>Da monte a valle</h2></div><span className="small-label">Flusso dell'acqua →</span></div><div className="hydraulic-flow"><div className="flow-node source"><span className="node-icon">≈</span><strong>Alto Micio</strong><small>Afflusso 56,1 m³/s</small></div><div className="flow-line"><i></i><span>56,1 m³/s</span></div><DamNode name="Diga Nord" code="DN-01" state="Aperta 32%" open /><div className="flow-line"><i></i><span>42,6 m³/s</span></div><DamNode name="Diga Centrale" code="DC-02" state="Aperta 18%" open /><div className="flow-line"><i></i><span>38,9 m³/s</span></div><DamNode name="Diga Sud" code="DS-03" state="Chiusa" /><div className="flow-line muted-line"><i></i><span>Valle del Micio</span></div></div><div className="hydraulic-note"><span className="note-symbol">i</span><p><strong>Come leggere lo schema</strong><br />Le percentuali indicano l'apertura delle paratoie. Il flusso viene regolato per mantenere la portata minima vitale nel tratto a valle.</p></div></section></div>
+function DamsPage({ onOpenMap }: { onOpenMap: (point: MantovaPoint) => void }) {
+  const [selectedAsset, setSelectedAsset] = useState<HydraulicAsset>(hydraulicAssets[0])
+
+  return <div className="page"><PageIntro eyebrow="CONTROLLO DELLE OPERE" title="La rete idraulica." copy="Lo schema del sistema Mincio, da monte a valle. Seleziona un'opera per leggerne funzione e stato operativo." action={<span className="live-status"><i></i> Live · aggiornato ora</span>} /><div className="dam-status-grid"><div><span>Opere monitorate</span><strong>15</strong></div><div><span>Regolazione attiva</span><strong>3</strong></div><div><span>Portata in uscita</span><strong>42,6 <small>m³/s</small></strong></div><div><span>Allerta operativa</span><strong className="green-text">Nessuna</strong></div></div><section className="hydraulic-card"><div className="card-heading"><div><p className="eyebrow">SCHEMA IN TEMPO REALE</p><h2>Da monte a valle</h2></div><span className="small-label">{hydraulicAssets.length} opere · seleziona un punto</span></div><HydraulicNetwork selectedAsset={selectedAsset} onSelect={setSelectedAsset} />{selectedAsset.pointId && <button className="hydraulic-map-link" onClick={() => onOpenMap(mantovaPoints.find((point) => point.id === selectedAsset.pointId) || mantovaPoints[0])}>Apri la posizione nella Mappa del fiume <span>→</span></button>}<div className="hydraulic-note"><span className="note-symbol">i</span><p><strong>Come leggere lo schema</strong><br />Le linee azzurre rappresentano il sistema idraulico. I numeri corrispondono alla legenda del PDF; clicca un'opera per visualizzare la scheda tecnica.</p></div></section></div>
+}
+
+export type HydraulicAsset = { id: number; name: string; type: string; description: string; status: string; x: number; y: number; pointId?: string }
+
+const hydraulicAssets: HydraulicAsset[] = [
+  { id: 1, name: 'Diga', type: 'Opera di regolazione', description: 'Sbarramento di valle del Lago di Garda e punto di ingresso del Mincio.', status: 'Regolazione attiva', x: 125, y: 96, pointId: '01' },
+  { id: 2, name: 'Partitore di Pozzolo', type: 'Partitore', description: 'Divide il flusso tra il canale principale e la derivazione di Pozzolo.', status: 'Operativo', x: 215, y: 185, pointId: '06' },
+  { id: 3, name: 'Partitore di Casale', type: 'Partitore', description: 'Nodo di distribuzione del flusso verso la rete irrigua di Casale.', status: 'Operativo', x: 285, y: 250, pointId: '05' },
+  { id: 4, name: 'Vaso di Porto (Vasarone)', type: 'Bacino', description: 'Sistema di invasi con funzione di regolazione e laminazione.', status: 'Livello nella norma', x: 365, y: 318 },
+  { id: 5, name: 'Conca - sostegno diga Masetti', type: 'Conca di navigazione', description: 'Consente il superamento del dislivello presso la diga Masetti.', status: 'Operativa', x: 450, y: 380 },
+  { id: 6, name: 'Conca di Vandaro', type: 'Conca di navigazione', description: 'Opera di sostegno e passaggio lungo il tratto di Vandaro.', status: 'Operativa', x: 515, y: 410 },
+  { id: 7, name: 'Scaricatore Vallazza-Fissero', type: 'Scaricatore', description: 'Scarico laterale per la gestione delle portate verso Vallazza-Fissero.', status: 'Disponibile', x: 580, y: 425 },
+  { id: 8, name: 'Darsena Enichem', type: 'Darsena', description: 'Approdo e area di connessione con la rete navigabile industriale.', status: 'Monitorata', x: 645, y: 425 },
+  { id: 9, name: 'Impianto idrovoro di Formigosa', type: 'Impianto idrovoro', description: 'Solleva e allontana le acque per la sicurezza idraulica di Formigosa.', status: 'Operativo', x: 710, y: 435 },
+  { id: 10, name: 'Chiavica e controchiavica di Formigosa', type: 'Chiavica', description: 'Regola il collegamento tra il sistema del Mincio e il territorio di bonifica.', status: 'Operativa', x: 775, y: 445 },
+  { id: 11, name: 'Sostegno - scaricatore di Governolo', type: 'Sostegno e scaricatore', description: 'Regola il livello e scarica le portate nel tratto terminale.', status: 'Regolazione attiva', x: 835, y: 460 },
+  { id: 12, name: 'Conca di Governolo', type: 'Conca di navigazione', description: 'Collega il Mincio al Po permettendo il passaggio delle imbarcazioni.', status: 'Operativa', x: 890, y: 470 },
+  { id: 13, name: 'Conca di San Leone', type: 'Conca di navigazione', description: 'Opera di navigazione sul ramo di collegamento a valle.', status: 'Operativa', x: 850, y: 535 },
+  { id: 14, name: 'Botte-sifone di Formigosa', type: 'Attraversamento idraulico', description: 'Attraversa il corso d’acqua mantenendo separati i diversi sistemi idraulici.', status: 'Monitorata', x: 700, y: 365 },
+  { id: 15, name: 'Porto di Valdaro', type: 'Porto', description: 'Nodo portuale della rete navigabile Mantova-Venezia.', status: 'Monitorato', x: 735, y: 300 },
+]
+
+function HydraulicNetwork({ selectedAsset, onSelect }: { selectedAsset: HydraulicAsset; onSelect: (asset: HydraulicAsset) => void }) {
+  return <ImageHydraulicSchema assets={hydraulicAssets} selectedAsset={selectedAsset} onSelect={onSelect} />
+
+  const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const dragStart = useRef<{ x: number; y: number } | null>(null)
+
+  return <div className="hydraulic-network-wrap"><div className="network-legend"><span><i className="legend-flow-line"></i> corso d'acqua</span><span><i className="legend-facility"></i> opera selezionabile</span><span>Usa + / − o trascina lo schema</span></div><div className="hydraulic-network-viewport" onPointerDown={(event) => { dragStart.current = { x: event.clientX - offset.x, y: event.clientY - offset.y }; event.currentTarget.setPointerCapture(event.pointerId) }} onPointerMove={(event) => { if (!dragStart.current) return; setOffset({ x: event.clientX - dragStart.current.x, y: event.clientY - dragStart.current.y }) }} onPointerUp={() => { dragStart.current = null }} onPointerCancel={() => { dragStart.current = null }}><svg className="hydraulic-network-svg" viewBox="0 0 1000 620" role="img" aria-label="Schema interattivo delle opere idrauliche del Mincio" style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})` }}><rect width="1000" height="620" fill="#edf5ed" /><path className="network-river" d="M96 72 C170 95 151 160 220 205 S300 300 380 330 S500 392 610 410 S760 450 934 478" /><path className="network-branch" d="M215 185 C160 180 120 210 76 235" /><path className="network-branch" d="M285 250 C245 280 204 310 154 330" /><path className="network-branch" d="M700 365 C748 330 800 300 890 260" /><path className="network-branch" d="M850 535 C805 510 760 495 710 470" /><text x="56" y="46" className="network-label">LAGO DI GARDA</text><text x="860" y="515" className="network-label">FIUME PO</text><text x="430" y="570" className="network-label">CANALE NAVIGABILE MANTOVA-VENEZIA</text>{hydraulicAssets.map((asset) => <g key={asset.id} className={`network-asset-marker ${selectedAsset.id === asset.id ? 'selected' : ''}`} role="button" tabIndex={0} aria-label={`${asset.id}. ${asset.name}`} onClick={() => { if (!dragStart.current) onSelect(asset) }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(asset) }}><circle cx={asset.x} cy={asset.y} r="19" /><text x={asset.x} y={asset.y + 5} textAnchor="middle">{asset.id}</text><text x={asset.x + 25} y={asset.y + 4} className="asset-marker-label">{asset.name}</text></g>)}</svg></div><div className="network-controls"><button onClick={() => setZoom((value) => Math.min(value + .15, 1.8))} aria-label="Aumenta zoom">+</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom((value) => Math.max(value - .15, .7))} aria-label="Riduci zoom">−</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }) }} aria-label="Reimposta schema">↺</button></div><div className="hydraulic-asset-detail"><span className="asset-detail-number">{selectedAsset.id.toString().padStart(2, '0')}</span><div><p className="eyebrow">{selectedAsset.type}</p><h3>{selectedAsset.name}</h3><p>{selectedAsset.description}</p><strong>{selectedAsset.status}</strong></div></div></div>
 }
 
 function DamNode({ name, code, state, open }: { name: string; code: string; state: string; open?: boolean }) { return <div className={`dam-node ${open ? 'open' : ''}`}><div className="dam-illustration"><span></span><span></span><span></span></div><strong>{name}</strong><small>{code}</small><b>{state}</b></div> }
