@@ -132,7 +132,6 @@ function App() {
           <div className="brand-mark"><span></span><span></span><span></span></div>
           <div><strong>mincio</strong><small>MONITOR</small></div>
         </div>
-        <div className="live-pill"><span className="live-dot"></span> DATI IN DIRETTA</div>
         <nav>
           <p className="nav-label">ESPLORA</p>
           {navItems.map((item) => <button className={`nav-item ${page === item.id ? 'active' : ''}`} key={item.id} onClick={() => navigate(item.id)}><Icon name={item.icon} /><span>{item.label}</span></button>)}
@@ -157,14 +156,79 @@ function PageIntro({ eyebrow, title, copy, action }: { eyebrow: string; title: s
   return <div className="page-intro"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p className="intro-copy">{copy}</p></div>{action}</div>
 }
 
-function HistoryPage({ point, onBack }: { point: MantovaPoint; onBack: () => void }) {
-  return <div className="page history-page"><div className="history-heading"><div><p className="eyebrow">ARCHIVIO DEL MONITORAGGIO</p><h1>Storico del punto</h1></div></div><section className="history-overview"><div className="history-map-card" role="button" tabIndex={0} aria-label="Torna alla mappa del fiume" onClick={onBack} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onBack() }}><LeafletMantovaMap points={[point]} selectedPoint={point} onSelect={() => undefined} compact /></div><div className="history-point-info"><p className="eyebrow">PUNTO {point.id}</p><h2>{point.name}</h2><span className={`history-status ${point.status === 'Attenzione' ? 'warning' : ''}`}>{point.status}</span><p className="history-description">{point.description}</p><div className="history-data"><div><span>Livello attuale</span><strong>{point.livelloIdrometrico}</strong></div><div><span>Coordinate</span><strong>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</strong></div><div><span>Ultima lettura</span><strong>24 settembre · 14:32</strong></div><div><span>Serie disponibile</span><strong>Ultimi 30 giorni</strong></div></div></div></section><section className="history-charts"><div className="history-chart-card"><div className="chart-header"><div><p className="eyebrow">LIVELLO IDROMETRICO</p><h2>Andamento del livello</h2></div><strong>0,64 m</strong></div><HistoryChart color="#4c9a79" fill="#cfe7d5" values="18,42 92,36 166,51 240,45 314,59 388,42 462,48 536,31 610,38" labels={['01', '05', '10', '15', '20', '25', '30']} /></div><div className="history-chart-card"><div className="chart-header"><div><p className="eyebrow">PORTATA STIMATA</p><h2>Flusso nell’ultimo mese</h2></div><strong>42,6 m³/s</strong></div><HistoryChart color="#d2954c" fill="#f3dfbd" values="18,55 92,46 166,60 240,38 314,50 388,29 462,43 536,24 610,34" labels={['01', '05', '10', '15', '20', '25', '30']} /></div></section></div>
+type HistoryYear = '2026' | '2025' | '2024'
+
+const historyYears: HistoryYear[] = ['2026', '2025', '2024']
+
+const historySeries: Record<HistoryYear, {
+  precip: { value: string; values: string; labels: string[]; color: string; fill: string }
+  flow: { value: string; values: string; labels: string[]; color: string; fill: string }
+}> = {
+  '2026': {
+    precip: {
+      value: '738 mm',
+      values: '18,58 72,72 126,42 180,81 234,47 288,88 342,43 396,74 450,41 504,82 558,36 610,51',
+      labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      color: '#4c9a79',
+      fill: '#cfe7d5',
+    },
+    flow: {
+      value: '42,6 m³/s',
+      values: '18,63 72,56 126,79 180,38 234,66 288,29 342,77 396,42 450,71 504,33 558,61 610,52',
+      labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      color: '#d2954c',
+      fill: '#f3dfbd',
+    },
+  },
+  '2025': {
+    precip: {
+      value: '692 mm',
+      values: '18,49 72,66 126,38 180,71 234,42 288,79 342,36 396,68 450,34 504,77 558,31 610,58',
+      labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      color: '#4c9a79',
+      fill: '#cfe7d5',
+    },
+    flow: {
+      value: '39,8 m³/s',
+      values: '18,54 72,48 126,72 180,34 234,58 288,25 342,69 396,36 450,64 504,29 558,55 610,47',
+      labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      color: '#d2954c',
+      fill: '#f3dfbd',
+    },
+  },
+  '2024': {
+    precip: {
+      value: '645 mm',
+      values: '18,44 72,59 126,33 180,69 234,38 288,76 342,31 396,64 450,30 504,72 558,27 610,55',
+      labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      color: '#4c9a79',
+      fill: '#cfe7d5',
+    },
+    flow: {
+      value: '36,4 m³/s',
+      values: '18,47 72,42 126,63 180,28 234,51 288,19 342,60 396,26 450,57 504,23 558,49 610,41',
+      labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      color: '#d2954c',
+      fill: '#f3dfbd',
+    },
+  },
 }
 
-function HistoryChart({ color, fill, values, labels }: { color: string; fill: string; values: string; labels: string[] }) {
+function HistoryPage({ point, onBack }: { point: MantovaPoint; onBack: () => void }) {
+  const [selectedYear, setSelectedYear] = useState<HistoryYear>('2026')
+  const activeSeries = historySeries[selectedYear]
+
+  return <div className="page history-page"><div className="history-heading"><div><p className="eyebrow">ARCHIVIO DEL MONITORAGGIO</p><h1>Storico del punto</h1></div></div><section className="history-overview"><div className="history-map-card" role="button" tabIndex={0} aria-label="Torna alla mappa del fiume" onClick={onBack} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onBack() }}><LeafletMantovaMap points={[point]} selectedPoint={point} onSelect={() => undefined} compact /></div><div className="history-point-info"><p className="eyebrow">PUNTO {point.id}</p><h2>{point.name}</h2><span className={`history-status ${point.status === 'Attenzione' ? 'warning' : ''}`}>{point.status}</span><p className="history-description">{point.description}</p><div className="history-data"><div><span>Livello attuale</span><strong>{point.livelloIdrometrico}</strong></div><div><span>Coordinate</span><strong>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</strong></div><div><span>Ultima lettura</span><strong>24 settembre · 14:32</strong></div><div><span>Serie disponibile</span><strong>{selectedYear}</strong></div></div></div></section><section className="history-charts"><div className="history-chart-card"><div className="chart-header"><h2>Precipitazioni annuali</h2><div className="chart-header-controls"><div className="history-year-switch" aria-label="Selezione anno dei dati">{historyYears.map((year) => <button key={year} type="button" className={`history-year-button ${selectedYear === year ? 'active' : ''}`} onClick={() => setSelectedYear(year)}>{year}</button>)}</div></div></div><HistoryChart color={activeSeries.precip.color} fill={activeSeries.precip.fill} values={activeSeries.precip.values} labels={activeSeries.precip.labels} /></div><div className="history-chart-card"><div className="chart-header"><h2>Portata misurata</h2><div className="chart-header-controls"><div className="history-year-switch" aria-label="Selezione anno dei dati">{historyYears.map((year) => <button key={year} type="button" className={`history-year-button ${selectedYear === year ? 'active' : ''}`} onClick={() => setSelectedYear(year)}>{year}</button>)}</div></div></div><HistoryChart color={activeSeries.flow.color} fill={activeSeries.flow.fill} values={activeSeries.flow.values} labels={activeSeries.flow.labels} threshold={20} thresholdLabel="Soglia minima" /></div></section></div>
+}
+
+function HistoryChart({ color, fill, values, labels, threshold, thresholdLabel }: { color: string; fill: string; values: string; labels: string[]; threshold?: number; thresholdLabel?: string }) {
   const points = values.split(' ').map((point) => point.split(',').map(Number))
   const area = `${points[0][0]},116 ${values} ${points[points.length - 1][0]},116`
-  return <div className="history-chart"><svg viewBox="0 0 628 145" role="img" aria-label="Grafico storico demo"><path d="M18 25H610 M18 70H610 M18 116H610" stroke="#e3ebe3" strokeWidth="1" /><polygon points={area} fill={fill} opacity=".72" /><polyline points={values} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />{points.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="4" fill="#fffefa" stroke={color} strokeWidth="2" />)}</svg><div className="chart-labels">{labels.map((label) => <span key={label}>{label}</span>)}</div></div>
+  const guideValues = [10, 20, 30, 40, 50]
+  const yForGuide = (value: number) => 116 - ((value / 50) * 90)
+  const thresholdY = threshold !== undefined ? yForGuide(threshold) : null
+
+  return <div className="history-chart"><svg viewBox="0 0 628 145" role="img" aria-label="Grafico storico demo"><path d="M18 25H610 M18 70H610 M18 116H610" stroke="#e3ebe3" strokeWidth="1" />{guideValues.map((value) => <g key={value}><line x1="18" x2="610" y1={yForGuide(value)} y2={yForGuide(value)} stroke="#e7eee8" strokeDasharray="4 6" strokeWidth="1" /><text x="4" y={yForGuide(value) + 4} fill="#97a69d" fontSize="8" fontFamily="DM Mono, monospace">{value}</text></g>)}{thresholdY !== null && <g><line x1="18" x2="610" y1={thresholdY} y2={thresholdY} stroke="#be4f3f" strokeWidth="2.4" /><text x="610" y={thresholdY - 6} textAnchor="end" fill="#be4f3f" fontSize="8.5" fontWeight="700" fontFamily="DM Mono, monospace">{thresholdLabel ?? `Soglia ${threshold}`}</text></g>}<polygon points={area} fill={fill} opacity=".72" /><polyline points={values} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg><div className="chart-labels">{labels.map((label) => <span key={label}>{label}</span>)}</div></div>
 }
 
 function Home({ navigate }: { navigate: (page: Page) => void }) {
