@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import MapPage, { LeafletMantovaMap } from './MapPage'
-import type { PointIconType } from './icons'
+import type { PointIconType, PointShape } from './icons'
 import 'leaflet/dist/leaflet.css'
 import './styles.css'
 import './hero-contrast.css'
@@ -17,77 +17,176 @@ export type MantovaPoint = {
   id: string
   name: string
   icon: PointIconType
+  forma?: PointShape
+  shape?: PointShape
+  colore?: string
+  color?: string
+  dati?: string
   description: string
   lat: number
   lng: number
-  status: 'Ottimale' | 'Attenzione'
-  livelloIdrometrico: string
 }
 
 const mantovaPoints: MantovaPoint[] = [
   {
     id: '01',
     name: 'Peschiera del Garda',
-    icon: 'barca',
+    icon: 'dam',
+    forma: 'quadrato',
+    colore: '#2563eb',
+    dati: 'Livello idrometrico: 0.65 m',
     description: 'Punto di ingresso del Mincio dal Lago di Garda.',
     lat: 45.440277,
     lng: 10.698333,
-    status: 'Ottimale',
-    livelloIdrometrico: '0.64 m',
   },
   {
     id: '02',
     name: 'Salionze Mandracchio Virgilio',
-    icon: 'goccia',
+    icon: 'text-search',
+    forma: 'cerchio',
+    colore: '#7a7a7a',
+    dati: 'Livello idrometrico: 0.65 m',
     description: 'Nodo di regolazione tra il corso principale e il canale Virgilio.',
     lat: 45.393888,
     lng: 10.709444,
-    status: 'Attenzione',
-    livelloIdrometrico: '0.64 m',
   },
   {
     id: '03',
     name: 'Salionze canale Seriola',
-    icon: 'goccia',
+    icon: 'text-search',
+    forma: 'cerchio',
+    colore: '#7a7a7a',
+    dati: 'Livello idrometrico: 0.84 m',
     description: 'Derivazione laterale collegata alla rete della Seriola.',
     lat: 45.392777,
     lng: 10.710833,
-    status: 'Ottimale',
-    livelloIdrometrico: '0.84 m',
   },
   {
     id: '04',
-    name: 'Salionze Mincio',
-    icon: 'goccia',
-    description: 'Rilevatore sul corso principale subito a valle di Salionze.',
-    lat: 45.392777,
-    lng: 10.706111,
-    status: 'Ottimale',
-    livelloIdrometrico: '0.36 m',
+    name: 'Casale di Goito',
+    icon: 'text-search',
+    forma: 'cerchio',
+    colore: '#7a7a7a',
+    dati: 'Idrometro a valle: 20.36 m',
+    description: 'Punto di monitoraggio a valle della derivazione di Casale di Goito.',
+    lat: 45.223888,
+    lng: 10.677500,
   },
   {
     id: '05',
-    name: 'Casale di Goito',
-    icon: 'goccia',
-    description: 'Stazione di controllo del livello nella valle del Mincio.',
-    lat: 45.223888,
-    lng: 10.677500,
-    status: 'Ottimale',
-    livelloIdrometrico: '20.30 m',
-  },
-  {
-    id: '06',
     name: 'Pozzolo',
-    icon: 'goccia',
+    icon: 'text-search',
+    forma: 'cerchio',
+    colore: '#7a7a7a',
+    dati: 'Idrometro a valle: 43.07 m',
     description: 'Punto di monitoraggio vicino alla derivazione di Pozzolo.',
     lat: 45.301666,
     lng: 10.713333,
-    status: 'Ottimale',
-    livelloIdrometrico: '0.05 m',
+  },
+  {
+    id: '06',
+    name: 'Peschiera del Garda Porto',
+    icon: 'boat',
+    forma: 'cerchio',
+    colore: '#0284c7',
+    dati: 'Ormeggio natanti consentito',
+    description: 'Punto di ingresso del Mincio dal Lago di Garda.',
+    lat: 45.481277,
+    lng: 10.695533,
+  },
+  {
+    id: '07',
+    name: 'Riserva Naturale Grazie',
+    icon: 'foglia',
+    forma: 'quadrato',
+    colore: '#018e20',
+    dati: 'Risorse idriche necessarie per il mantenimento: 0,69 m³/s',
+    description: 'Area protetta con risorse idriche significative.',
+    lat: 45.1637584,
+    lng: 10.7074766,
+  },
+  {
+    id: '08',
+    name: 'Campo Volta Mantovana',
+    icon: 'grano',
+    forma: 'quadrato',
+    colore: '#dfd92c',
+    dati: 'Risorse idriche necessarie per il mantenimento: 0,30 m³/s',
+    description: 'Area agricola con coltivazioni di grano e mais.',
+    lat: 45.3369897,
+    lng: 10.6903311,
+  },
+  {
+    id: '09',
+    name: 'Campo Nogarole Rocca',
+    icon: 'grano',
+    forma: 'quadrato',
+    colore: '#dfd92c',
+    dati: 'Risorse idriche necessarie per il mantenimento: 0,15 m³/s',
+    description: 'Area agricola con coltivazioni di grano e mais.',
+    lat: 45.3038827,
+    lng: 10.8603721,
+  },
+  {
+    id: '10',
+    name: 'Marenghello',
+    icon: 'goccia',
+    forma: 'cerchio',
+    colore: '#6cceff',
+    dati: 'Idrometro a monte: 44.33 m',
+    description: 'Deflusso minimo vitale Mareghello.',
+    lat: 45.258611,
+    lng: 10.731666,
+  },
+  {
+    id: '11',
+    name: 'Lago di mantova',
+    icon: 'text-search',
+    forma: 'cerchio',
+    colore: '#7a7a7a',
+    dati: 'Livello idrometrico: 0.05 m',
+    description: 'Punto di monitoraggio del livello del lago di Mantova.',
+    lat: 45.1666088,
+    lng: 10.7933861,
+  },
+  {
+    id: '12',
+    name: 'Centrale idroelettrica medio mantovano',
+    icon: 'dam',
+    forma: 'quadrato',
+    colore: '#2563eb',
+    dati: 'Produzione idroelettrica attiva',
+    description: 'Centrale idroelettrica del medio Mincio.',
+    lat: 45.3932382,
+    lng: 10.70587,
   },
 ]
 
 export { mantovaPoints }
+
+// Direzioni supportate: 'nord' | 'nord-est' | 'est' | 'sud-est' | 'sud' | 'sud-ovest' | 'ovest' | 'nord-ovest'
+// oppure un angolo numerico in gradi (0 = nord, 90 = est, ecc.)
+export type FrecciaDirezione =
+  | 'nord' | 'nord-est' | 'est' | 'sud-est'
+  | 'sud' | 'sud-ovest' | 'ovest' | 'nord-ovest'
+  | number
+
+export type MantovaArrow = {
+  id: string
+  lat: number
+  lng: number
+  direzione: FrecciaDirezione
+  colore?: string
+  color?: string
+  size?: number
+}
+
+const mantovaArrows: MantovaArrow[] = [
+  
+]
+
+export { mantovaArrows }
+
 
 const navItems: { id: Page; label: string; icon: IconName }[] = [
   { id: 'home', label: 'Panoramica', icon: 'home' },
@@ -218,7 +317,7 @@ function HistoryPage({ point, onBack }: { point: MantovaPoint; onBack: () => voi
   const [selectedYear, setSelectedYear] = useState<HistoryYear>('2026')
   const activeSeries = historySeries[selectedYear]
 
-  return <div className="page history-page"><div className="history-heading"><div><p className="eyebrow">ARCHIVIO DEL MONITORAGGIO</p><h1>Storico del punto</h1></div></div><section className="history-overview"><div className="history-map-card" role="button" tabIndex={0} aria-label="Torna alla mappa del fiume" onClick={onBack} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onBack() }}><LeafletMantovaMap points={[point]} selectedPoint={point} onSelect={() => undefined} compact /></div><div className="history-point-info"><p className="eyebrow">PUNTO {point.id}</p><h2>{point.name}</h2><span className={`history-status ${point.status === 'Attenzione' ? 'warning' : ''}`}>{point.status}</span><p className="history-description">{point.description}</p><div className="history-data"><div><span>Livello attuale</span><strong>{point.livelloIdrometrico}</strong></div><div><span>Coordinate</span><strong>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</strong></div><div><span>Ultima lettura</span><strong>24 settembre · 14:32</strong></div><div><span>Serie disponibile</span><strong>{selectedYear}</strong></div></div></div></section><section className="history-charts"><div className="history-chart-card"><div className="chart-header"><h2>Precipitazioni annuali</h2><div className="chart-header-controls"><div className="history-year-switch" aria-label="Selezione anno dei dati">{historyYears.map((year) => <button key={year} type="button" className={`history-year-button ${selectedYear === year ? 'active' : ''}`} onClick={() => setSelectedYear(year)}>{year}</button>)}</div></div></div><HistoryChart color={activeSeries.precip.color} fill={activeSeries.precip.fill} values={activeSeries.precip.values} labels={activeSeries.precip.labels} /></div><div className="history-chart-card"><div className="chart-header"><h2>Portata misurata</h2><div className="chart-header-controls"><div className="history-year-switch" aria-label="Selezione anno dei dati">{historyYears.map((year) => <button key={year} type="button" className={`history-year-button ${selectedYear === year ? 'active' : ''}`} onClick={() => setSelectedYear(year)}>{year}</button>)}</div></div></div><HistoryChart color={activeSeries.flow.color} fill={activeSeries.flow.fill} values={activeSeries.flow.values} labels={activeSeries.flow.labels} threshold={20} thresholdLabel="Soglia minima" /></div></section></div>
+  return <div className="page history-page"><div className="history-heading"><div><p className="eyebrow">ARCHIVIO DEL MONITORAGGIO</p><h1>Storico del punto</h1></div></div><section className="history-overview"><div className="history-map-card" role="button" tabIndex={0} aria-label="Torna alla mappa del fiume" onClick={onBack} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onBack() }}><LeafletMantovaMap points={[point]} selectedPoint={point} onSelect={() => undefined} compact /></div><div className="history-point-info"><p className="eyebrow">PUNTO {point.id}</p><h2>{point.name}</h2><p className="history-description">{point.description}</p><div className="history-data">{point.dati && <div><span>Dati</span><strong>{point.dati}</strong></div>}<div><span>Coordinate</span><strong>{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</strong></div><div><span>Ultima lettura</span><strong>24 settembre · 14:32</strong></div><div><span>Serie disponibile</span><strong>{selectedYear}</strong></div></div></div></section><section className="history-charts"><div className="history-chart-card"><div className="chart-header"><h2>Precipitazioni annuali</h2><div className="chart-header-controls"><div className="history-year-switch" aria-label="Selezione anno dei dati">{historyYears.map((year) => <button key={year} type="button" className={`history-year-button ${selectedYear === year ? 'active' : ''}`} onClick={() => setSelectedYear(year)}>{year}</button>)}</div></div></div><HistoryChart color={activeSeries.precip.color} fill={activeSeries.precip.fill} values={activeSeries.precip.values} labels={activeSeries.precip.labels} /></div><div className="history-chart-card"><div className="chart-header"><h2>Portata misurata</h2><div className="chart-header-controls"><div className="history-year-switch" aria-label="Selezione anno dei dati">{historyYears.map((year) => <button key={year} type="button" className={`history-year-button ${selectedYear === year ? 'active' : ''}`} onClick={() => setSelectedYear(year)}>{year}</button>)}</div></div></div><HistoryChart color={activeSeries.flow.color} fill={activeSeries.flow.fill} values={activeSeries.flow.values} labels={activeSeries.flow.labels} threshold={20} thresholdLabel="Soglia minima" /></div></section></div>
 }
 
 function HistoryChart({ color, fill, values, labels, threshold, thresholdLabel }: { color: string; fill: string; values: string; labels: string[]; threshold?: number; thresholdLabel?: string }) {

@@ -42,13 +42,24 @@ button { cursor: pointer; }
   display: block;
   stroke: #ffffff;
 }
-.mantova-pin.warning {
-  background: #e1a14d;
+.mantova-pin.square, .list-marker.square {
+  border-radius: 6px !important;
+}
+.mantova-pin.circle, .list-marker.circle {
+  border-radius: 50% !important;
 }
 .mantova-pin.selected {
   transform: scale(1.25);
   box-shadow: 0 8px 20px rgba(27, 64, 49, .45);
   border-color: #fef08a;
+}
+.mantova-arrow {
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 .mantova-popup h3 { margin: 0 0 4px; font-size: 16px; }
 .mantova-popup strong { display: block; color: #56736a; font-size: 11px; margin-bottom: 8px; }

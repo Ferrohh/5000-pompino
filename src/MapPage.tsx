@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
-import { mantovaPoints, type MantovaPoint } from './main'
-import { PointIcon, getPointIconSvg } from './icons'
+import { mantovaPoints, mantovaArrows, type MantovaPoint } from './main'
+import { PointIcon, getPointIconSvg, getPointShape, getPointColor, getArrowSvg } from './icons'
 
 export default function MapPage({ initialPoint, onOpenHistory }: { initialPoint: MantovaPoint | null; onOpenHistory: (point: MantovaPoint) => void }) {
   const [selectedPoint, setSelectedPoint] = useState<MantovaPoint | null>(initialPoint)
@@ -17,7 +17,7 @@ export default function MapPage({ initialPoint, onOpenHistory }: { initialPoint:
             <button className="map-search-toggle" onClick={() => setSearchOpen((open) => !open)} aria-label="Cerca un punto sulla mappa" aria-expanded={searchOpen}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 5 5"></path></svg>
             </button>
-            {searchOpen && <div className="map-search-panel"><input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Cerca un punto" aria-label="Cerca un punto" />{searchQuery && <div className="map-search-results">{matchingPoints.length ? matchingPoints.map((point) => <button key={point.id} onClick={() => { setSelectedPoint(point); setSearchOpen(false) }}><strong>{point.name}</strong><small>{point.id} · {point.livelloIdrometrico}</small></button>) : <span>Nessun punto trovato</span>}</div>}</div>}
+            {searchOpen && <div className="map-search-panel"><input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Cerca un punto" aria-label="Cerca un punto" />{searchQuery && <div className="map-search-results">{matchingPoints.length ? matchingPoints.map((point) => <button key={point.id} onClick={() => { setSelectedPoint(point); setSearchOpen(false) }}><strong>{point.name}</strong><small>{point.id}{point.dati ? ` · ${point.dati}` : ''}</small></button>) : <span>Nessun punto trovato</span>}</div>}</div>}
           </div>
 
           <div className="mantova-map-frame">
@@ -30,12 +30,21 @@ export default function MapPage({ initialPoint, onOpenHistory }: { initialPoint:
           <div>
             <p className="eyebrow">PUNTO SELEZIONATO</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className={`list-marker ${selectedPoint.status === 'Attenzione' ? 'caution' : ''}`} style={{ width: '22px', height: '22px', flexShrink: 0 }}>
+              <span
+                className={`list-marker ${getPointShape(selectedPoint)}`}
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  flexShrink: 0,
+                  backgroundColor: getPointColor(selectedPoint),
+                  color: '#ffffff',
+                }}
+              >
                 <PointIcon icon={selectedPoint.icon} size={14} />
               </span>
               <h3 style={{ margin: 0 }}>{selectedPoint.name}</h3>
             </div>
-            <p>{selectedPoint.id}</p>
+            <p>{selectedPoint.id}{selectedPoint.dati ? ` · ${selectedPoint.dati}` : ''}</p>
             <p className="selected-point-description">{selectedPoint.description}</p>
           </div>
           <button className="history-button" onClick={() => onOpenHistory(selectedPoint)}>Vai allo storico <span>→</span></button>
@@ -46,25 +55,31 @@ export default function MapPage({ initialPoint, onOpenHistory }: { initialPoint:
             </div>
           </div>
 
-          {mantovaPoints.map((point) => (
-            <button
-              className="sensor-row"
-              key={point.id}
-              onClick={() => setSelectedPoint(point)}
-            >
-              <span className={`list-marker ${point.status === 'Attenzione' ? 'caution' : ''}`}>
-                <PointIcon icon={point.icon} size={15} />
-              </span>
-              <span className="sensor-info">
-                <strong>{point.name} <small>{point.id}</small></strong>
-                <span>Livello idrometrico: {point.livelloIdrometrico}</span>
-              </span>
-              <span className="sensor-level">
-                <strong>{point.status}</strong>
-                <small>{point.livelloIdrometrico}</small>
-              </span>
-            </button>
-          ))}
+          {mantovaPoints.map((point) => {
+            const isSquare = getPointShape(point) === 'square'
+            const color = getPointColor(point)
+            return (
+              <button
+                className="sensor-row"
+                key={point.id}
+                onClick={() => setSelectedPoint(point)}
+              >
+                <span
+                  className={`list-marker ${isSquare ? 'square' : 'circle'}`}
+                  style={{
+                    backgroundColor: color,
+                    color: '#ffffff',
+                  }}
+                >
+                  <PointIcon icon={point.icon} size={15} />
+                </span>
+                <span className="sensor-info">
+                  <strong>{point.name} <small>{point.id}</small></strong>
+                  {point.dati && <span>{point.dati}</span>}
+                </span>
+              </button>
+            )
+          })}
         </aside>}
       </div>
     </div>
@@ -76,27 +91,34 @@ function LeafletMantovaMap({ points, selectedPoint, onSelect, compact }: { point
   const mapRef = useRef<L.Map | null>(null)
   const markerRefs = useRef<Record<string, L.Marker>>({})
 
-  const createPointIcon = (point: MantovaPoint, selected: boolean) => L.divIcon({
-    className: 'mantova-marker-icon',
-    html: `<div class="mantova-pin ${point.status === 'Attenzione' ? 'warning' : ''} ${selected ? 'selected' : ''}">${getPointIconSvg(point.icon, 15)}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-    popupAnchor: [0, -16],
-  })
+  const createPointIcon = (point: MantovaPoint, selected: boolean) => {
+    const isSquare = getPointShape(point) === 'square'
+    const color = getPointColor(point)
+    return L.divIcon({
+      className: 'mantova-marker-icon',
+      html: `<div class="mantova-pin ${isSquare ? 'square' : 'circle'} ${selected ? 'selected' : ''}" style="background-color: ${color};">${getPointIconSvg(point.icon, 15)}</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -16],
+    })
+  }
 
-  const popupHtml = (point: MantovaPoint) => `
-    <div class="mantova-popup">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-        <span class="list-marker ${point.status === 'Attenzione' ? 'caution' : ''}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center;">${getPointIconSvg(point.icon, 14)}</span>
-        <h3 style="margin:0;">${point.name}</h3>
+  const popupHtml = (point: MantovaPoint) => {
+    const isSquare = getPointShape(point) === 'square'
+    const color = getPointColor(point)
+    return `
+      <div class="mantova-popup">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span class="list-marker ${isSquare ? 'square' : 'circle'}" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; background-color:${color}; color:#fff;">${getPointIconSvg(point.icon, 14)}</span>
+          <h3 style="margin:0;">${point.name}</h3>
+        </div>
+        <p class="eyebrow">${point.id}</p>
+        <p>${point.description}</p>
+        <strong>Lat ${point.lat.toFixed(4)} · Lng ${point.lng.toFixed(4)}</strong>
+        ${point.dati ? `<p style="margin-top:6px; font-weight:600; color:#2d665b;">${point.dati}</p>` : ''}
       </div>
-      <p class="eyebrow">${point.id}</p>
-      <p>${point.description}</p>
-      <strong>Lat ${point.lat.toFixed(4)} · Lng ${point.lng.toFixed(4)}</strong>
-      <p>Livello idrometrico: ${point.livelloIdrometrico}</p>
-      <span class="popup-tag ${point.status === 'Attenzione' ? 'warning' : ''}">${point.status}</span>
-    </div>
-  `
+    `
+  }
 
   useEffect(() => {
     if (!mapElementRef.current || mapRef.current) return
@@ -124,6 +146,19 @@ function LeafletMantovaMap({ points, selectedPoint, onSelect, compact }: { point
       marker.on('click', () => onSelect(point))
       marker.addTo(map)
       markerRefs.current[point.id] = marker
+    })
+
+    // frecce non interattive
+    mantovaArrows.forEach((arrow) => {
+      const size = arrow.size ?? 28
+      const color = arrow.colore || arrow.color || '#2d665b'
+      const arrowIcon = L.divIcon({
+        className: 'mantova-marker-icon',
+        html: `<div class="mantova-arrow">${getArrowSvg(arrow.direzione, size, color)}</div>`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      })
+      L.marker([arrow.lat, arrow.lng], { icon: arrowIcon, interactive: false, keyboard: false }).addTo(map)
     })
 
     mapRef.current = map
